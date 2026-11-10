@@ -15,7 +15,10 @@ function renderRowActions(array $props): string
     $resolver->shouldReceive('resolveToRelativePath')->andReturn($path);
     $themes->shouldReceive('resolveView')->andReturn($path);
 
-    return (new TemplateRenderer($themes, $resolver, new RouteContext()))->renderComponent('row-actions', $props);
+    $renderer = new TemplateRenderer($themes, $resolver, new RouteContext());
+    $renderer->addGlobals(['t' => 'chrome_translate']);
+
+    return $renderer->renderComponent('row-actions', $props);
 }
 
 test('the button is named after the row and controls its menu', function () {

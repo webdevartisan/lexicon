@@ -59,6 +59,7 @@ final class ArchivePostValidator
         $data['category'] = $this->term($raw['category'] ?? null, 'category', $errors);
         $data['tags'] = $this->tags($raw['tags'] ?? [], $errors);
         $data['author_name'] = is_string($raw['author_name'] ?? null) ? mb_substr($raw['author_name'], 0, 150) : '';
+        $data['archive_id'] = is_int($raw['archive_id'] ?? null) && $raw['archive_id'] > 0 ? $raw['archive_id'] : null;
 
         return ['data' => $data, 'errors' => $errors];
     }

@@ -257,7 +257,7 @@ final class AnalyticsSeeder
     }
 
     /**
-     * Every blog's zone, pages and daily visitors, worked out once for all windows.
+     * Every blog's pages and daily visitors, worked out once for all windows.
      *
      * @param  list<array<string, mixed>>  $blogs  Busiest first
      * @return list<array{id: int, zone: \DateTimeZone, pages: list<array{0: string, 1: ?int, 2: string, 3: int}>, visitors: int}>
@@ -270,7 +270,7 @@ final class AnalyticsSeeder
             $rank = $index + 1;
             $targets[] = [
                 'id' => (int) $blog['id'],
-                'zone' => new \DateTimeZone(self::zone($blog)),
+                'zone' => new \DateTimeZone('UTC'),
                 'pages' => $this->pages($blog, $scaled ? self::SCALED_POSTS : 40, $scaled ? 10 : 1),
                 'visitors' => $scaled ? max(2, (int) round($topVisitors / $rank ** 0.8)) : [1 => 120, 2 => 45, 3 => 15][$rank] ?? 10,
             ];
@@ -338,23 +338,14 @@ final class AnalyticsSeeder
         $where = $blogIds === [] ? '' : 'AND b.id IN ('.implode(',', array_map('intval', $blogIds)).')';
 
         return $this->db->query(
-            "SELECT b.id, b.blog_slug, COALESCE(s.timezone, 'UTC') AS timezone, COUNT(p.id) AS posts
+            "SELECT b.id, b.blog_slug, COUNT(p.id) AS posts
              FROM blogs b
              JOIN posts p ON p.blog_id = b.id AND p.status = 'published'
-             LEFT JOIN blog_settings s ON s.blog_id = b.id
              WHERE b.status = 'published' {$where}
-             GROUP BY b.id, b.blog_slug, s.timezone
+             GROUP BY b.id, b.blog_slug
              ORDER BY posts DESC, b.id
              LIMIT ".($blogIds === [] ? $limit : count($blogIds))
         )->fetchAll(\PDO::FETCH_ASSOC);
-    }
-
-    /**
-     * @param  array<string, mixed>  $blog
-     */
-    private static function zone(array $blog): string
-    {
-        return in_array($blog['timezone'], \DateTimeZone::listIdentifiers(), true) ? (string) $blog['timezone'] : 'UTC';
     }
 
     /**
@@ -487,7 +478,7 @@ final class AnalyticsSeeder
         $written = 0;
 
         foreach ($blogs as $rank => $blog) {
-            $zone = new \DateTimeZone(self::zone($blog));
+            $zone = new \DateTimeZone('UTC');
             $posts = array_values(array_filter(array_column($this->pages($blog), 1)));
 
             for ($ago = $days + 1; $ago < self::HISTORY_DAYS; $ago++) {

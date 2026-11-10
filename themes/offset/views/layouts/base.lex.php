@@ -36,6 +36,7 @@
         <a href="<?= $homeUrl ?>"><span<?= $wording->attrs('offset::nav.home') ?>><?= $wording->html('offset::nav.home') ?></span></a>
         <a href="<?= $archiveUrl ?>"><span<?= $wording->attrs('offset::nav.archive') ?>><?= $wording->html('offset::nav.archive') ?></span></a>
         <a href="<?= $subscribeUrl ?>"><span<?= $wording->attrs('offset::nav.subscribe') ?>><?= $wording->html('offset::nav.subscribe') ?></span></a>
+        {% slot "blog.nav" %}
       </nav>
 
       <div class="masthead-actions">

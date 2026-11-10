@@ -46,7 +46,7 @@ class AnalyticsRollupModel extends AppModel
      * Rebuild every scope's days from $from on. With $blogIds, blogs and posts are
      * rebuilt only for those blogs; the site and platform are always rebuilt whole.
      *
-     * @param  string  $from  Y-m-d, read as UTC for the site and platform, in each blog's timezone for blogs and posts
+     * @param  string  $from  Y-m-d in UTC
      * @param  list<int>|null  $blogIds  The blogs whose events changed, or null for all of them
      * @return array{daily: int, dimensions: int, events: int} Rows written
      */

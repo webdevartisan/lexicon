@@ -1,6 +1,6 @@
 {% extends "back.lex.php" %}
 
-{% block title %}Subscribers{% endblock %}
+{% block title %}{{ t('navigation.subscribers') }}{% endblock %}
 {% block subtitle %}<span class="hidden sm:inline">Readers who left their email to hear about new posts on this blog.</span>{% endblock %}
 {% block body %}
 <div class="container-fluid group-data-contentboxed:max-w-boxed mx-auto">

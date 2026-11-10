@@ -1,6 +1,6 @@
 {% extends "back.lex.php" %}
 
-{% block title %}Cache Management - Control Panel{% endblock %}
+{% block title %}Cache Management{% endblock %}
 {% block subtitle %}Monitor and manage application cache system{% endblock %}
 
 {% block body %}
@@ -11,10 +11,97 @@
         {% cache 'lucide:info' ttl=31536000 %}<i data-lucide="info" class="size-4 mt-0.5 shrink-0"></i>{% endcache %}
         <div class="text-sm">
             <p class="font-medium">Response caching is off (CACHE_ENABLED=false).</p>
-            <p class="mt-0.5">Pages are rendered fresh on every request. Compiled views below are still generated because templates must compile to run; the maintenance actions on this page keep working so you can clean up leftover files.</p>
+            <p class="mt-0.5">Pages are rendered fresh on every request. Templates still compile, but remember the setting they were built under. After switching caching back on, use Rebuild templates below.</p>
         </div>
     </div>
     {% endif %}
+
+    <?php
+    $staleViews = (int) ($cacheStats['compiled_views_stale'] ?? 0);
+    $layerCards = [
+        ['key' => 'pages', 'icon' => 'file-text', 'title' => 'Pages',
+            'text' => 'Whole pages saved for visitors who are signed out. Clearing them is safe, each page is saved again on its next visit.'],
+        ['key' => 'fragments', 'icon' => 'puzzle', 'title' => 'Fragments',
+            'text' => 'Small saved pieces inside pages, like the sidebar and icons. Clear them after changing menus or icons.'],
+    ];
+    ?>
+
+    <?php if ($staleViews > 0) { ?>
+    <div class="mb-5 px-4 py-3 rounded-md border border-orange-200 bg-orange-50 text-orange-800 dark:bg-orange-500/10 dark:border-orange-500/30 dark:text-orange-200 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-start gap-3">
+            {% cache 'lucide:alert-triangle:stale' ttl=31536000 %}<i data-lucide="alert-triangle" class="size-4 mt-0.5 shrink-0"></i>{% endcache %}
+            <div class="text-sm">
+                <p class="font-medium"><?= number_format($staleViews) ?> compiled templates were built <?= $cacheStats['enabled'] ? 'while caching was off' : 'while caching was on' ?>.</p>
+                <p class="mt-0.5">They keep that behaviour until rebuilt, so icons may appear late and caching may not apply on some pages.</p>
+            </div>
+        </div>
+        <form action="<?= buildLocalizedUrl('/admin/cache/rebuild-views') ?>" method="POST">
+            <?= csrf_field() ?>
+            <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-orange-500 border border-orange-500 rounded-md hover:bg-orange-600 transition-colors">
+                Rebuild templates
+            </button>
+        </form>
+    </div>
+    <?php } ?>
+
+    <div class="mb-3 flex justify-end gap-4">
+        <a href="<?= buildLocalizedUrl('/admin/cache/browse') ?>" class="text-sm font-medium text-custom-500 hover:underline">Browse stored entries</a>
+        <a href="<?= buildLocalizedUrl('/admin/cache/browse-compiled') ?>" class="text-sm font-medium text-custom-500 hover:underline">Browse compiled templates</a>
+    </div>
+
+    <?php /* One card per stored layer, so each clear button says what it touches */ ?>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+        <?php foreach ($layerCards as $layerCard) { ?>
+        <div class="card">
+            <div class="card-body flex flex-col h-full">
+                <h6 class="mb-2 text-15 flex items-center gap-2">
+                    {% cache 'lucide:layer:' . $layerCard['icon'] ttl=31536000 %}<i class="size-5 text-custom-500" data-lucide="<?= e($layerCard['icon']) ?>"></i>{% endcache %}
+                    <?= e($layerCard['title']) ?>
+                </h6>
+                <p class="text-2xl font-semibold text-slate-900 dark:text-zink-50">
+                    <?= number_format($cacheStats['layers'][$layerCard['key']]['count']) ?>
+                    <span class="text-sm font-normal text-slate-500 dark:text-zink-300">
+                        entries, <?= number_format($cacheStats['layers'][$layerCard['key']]['size_bytes'] / 1024, 1) ?> KB
+                    </span>
+                </p>
+                <p class="text-sm text-slate-500 dark:text-zink-200 mt-2 mb-4"><?= e($layerCard['text']) ?></p>
+                <form action="<?= buildLocalizedUrl('/admin/cache/clear-layer') ?>" method="POST" class="mt-auto">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="layer" value="<?= e($layerCard['key']) ?>">
+                    <button type="submit" class="w-full inline-flex justify-center items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 dark:bg-red-500/10 dark:border-red-500/30 dark:text-red-300 dark:hover:bg-red-500/20 transition-colors"
+                            data-confirm="Clear all <?= e(strtolower($layerCard['title'])) ?>?">
+                        Clear <?= e(strtolower($layerCard['title'])) ?>
+                    </button>
+                </form>
+            </div>
+        </div>
+        <?php } ?>
+
+        <div class="card">
+            <div class="card-body flex flex-col h-full">
+                <h6 class="mb-2 text-15 flex items-center gap-2">
+                    {% cache 'lucide:layer:code' ttl=31536000 %}<i class="size-5 text-custom-500" data-lucide="code"></i>{% endcache %}
+                    Compiled templates
+                </h6>
+                <p class="text-2xl font-semibold text-slate-900 dark:text-zink-50">
+                    <?= number_format((int) $cacheStats['compiled_views_count']) ?>
+                    <span class="text-sm font-normal text-slate-500 dark:text-zink-300">
+                        files, <?= number_format($cacheStats['compiled_views_size_bytes'] / 1024, 1) ?> KB
+                    </span>
+                </p>
+                <p class="text-sm text-slate-500 dark:text-zink-200 mt-2 mb-4">
+                    Your page templates turned into PHP. They remember whether caching was on when they were built, so rebuild them after switching caching on or off.
+                </p>
+                <form action="<?= buildLocalizedUrl('/admin/cache/rebuild-views') ?>" method="POST" class="mt-auto">
+                    <?= csrf_field() ?>
+                    <button type="submit" class="w-full inline-flex justify-center items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 dark:bg-red-500/10 dark:border-red-500/30 dark:text-red-300 dark:hover:bg-red-500/20 transition-colors"
+                            data-confirm="Rebuild all compiled templates?">
+                        Rebuild templates
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <?php /* Cache Statistics Card */ ?>
     <div class="mb-5">
@@ -35,7 +122,7 @@
                     Remove cache files matching a specific pattern. Useful for targeted invalidation without clearing all cache.
                 </p>
                 
-                <form action="/admin/cache/delete-pattern" method="POST">
+                <form action="<?= buildLocalizedUrl('/admin/cache/delete-pattern') ?>" method="POST">
                     <?= csrf_field() ?>
                     
                     <div class="mb-4">
@@ -58,19 +145,19 @@
                         <ul class="text-xs text-slate-600 dark:text-zink-300 space-y-1.5">
                             <li class="flex items-start gap-2">
                                 <code class="px-2 py-0.5 rounded bg-white dark:bg-zink-700 border border-slate-200 dark:border-zink-500 font-mono">en:*</code>
-                                <span class="text-slate-500 dark:text-zink-400">- All English pages</span>
+                                <span class="text-slate-500 dark:text-zink-400">All English pages</span>
                             </li>
                             <li class="flex items-start gap-2">
                                 <code class="px-2 py-0.5 rounded bg-white dark:bg-zink-700 border border-slate-200 dark:border-zink-500 font-mono">*blogs*</code>
-                                <span class="text-slate-500 dark:text-zink-400">- All blog-related pages</span>
+                                <span class="text-slate-500 dark:text-zink-400">All blog-related pages</span>
                             </li>
                             <li class="flex items-start gap-2">
                                 <code class="px-2 py-0.5 rounded bg-white dark:bg-zink-700 border border-slate-200 dark:border-zink-500 font-mono">*:GET:/products*</code>
-                                <span class="text-slate-500 dark:text-zink-400">- All product pages (any locale)</span>
+                                <span class="text-slate-500 dark:text-zink-400">All product pages (any locale)</span>
                             </li>
                             <li class="flex items-start gap-2">
                                 <code class="px-2 py-0.5 rounded bg-white dark:bg-zink-700 border border-slate-200 dark:border-zink-500 font-mono">fr:GET:/blog/*/post/*</code>
-                                <span class="text-slate-500 dark:text-zink-400">- All French blog posts</span>
+                                <span class="text-slate-500 dark:text-zink-400">All French blog posts</span>
                             </li>
                         </ul>
                     </div>
@@ -150,11 +237,11 @@
                     <ul class="text-sm text-sky-800 dark:text-sky-300 space-y-2">
                         <li class="flex items-start gap-2">
                             <i class="size-4 mt-0.5 text-sky-600 dark:text-sky-400 flex-shrink-0" data-lucide="check"></i>
-                            <span><strong class="font-semibold">Prune Expired:</strong> Safe operation - only removes files past their TTL</span>
+                            <span><strong class="font-semibold">Prune Expired:</strong> Safe operation, only removes files past their TTL</span>
                         </li>
                         <li class="flex items-start gap-2">
                             <i class="size-4 mt-0.5 text-sky-600 dark:text-sky-400 flex-shrink-0" data-lucide="check"></i>
-                            <span><strong class="font-semibold">Clear All:</strong> Removes all cache including fresh files - use when deploying updates</span>
+                            <span><strong class="font-semibold">Clear All:</strong> Removes all cache including fresh files. Use when deploying updates</span>
                         </li>
                         <li class="flex items-start gap-2">
                             <i class="size-4 mt-0.5 text-sky-600 dark:text-sky-400 flex-shrink-0" data-lucide="check"></i>
@@ -166,7 +253,7 @@
                         </li>
                         <li class="flex items-start gap-2">
                             <i class="size-4 mt-0.5 text-sky-600 dark:text-sky-400 flex-shrink-0" data-lucide="check"></i>
-                            <span><strong class="font-semibold">Monitoring:</strong> Check "Files over limit" - if consistently high, consider increasing max_files in config</span>
+                            <span><strong class="font-semibold">Monitoring:</strong> Check "Files over limit". If it is consistently high, consider increasing max_files in config</span>
                         </li>
                     </ul>
                 </div>

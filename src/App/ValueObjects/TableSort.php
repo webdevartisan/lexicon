@@ -19,6 +19,7 @@ final class TableSort
     /**
      * @param  array<string, string>  $columns  key => SQL expression
      * @param  array<string, mixed>  $query  current query string, for building links
+     * @param  array<string, array{0: string, 1: string}>  $named  sort menu choices, name => [column key, direction]
      */
     private function __construct(
         private readonly string $key,
@@ -27,6 +28,8 @@ final class TableSort
         private readonly string $tiebreaker,
         private readonly array $query,
         private readonly string $pinned = '',
+        private readonly bool $requested = false,
+        private readonly array $named = [],
     ) {}
 
     /**
@@ -38,6 +41,9 @@ final class TableSort
      * @param  string  $tiebreaker  SQL appended after the sort column so paging stays stable
      * @param  string  $pinned  SQL put before the sort column, for rows that should
      *                          stay at the top whatever the table is sorted by
+     * @param  array<string, array{0: string, 1: string}>  $named  Sort menu choices, each a name for a
+     *                                                             column plus a direction. A column header link always carries `dir`, so a
+     *                                                             key that is also a column and comes with a direction is the column.
      */
     public static function fromRequest(
         Request $request,
@@ -45,7 +51,8 @@ final class TableSort
         string $defaultKey,
         string $defaultDirection = 'desc',
         string $tiebreaker = '',
-        string $pinned = ''
+        string $pinned = '',
+        array $named = []
     ): self {
         // `?sort[]=x` hands us an array, and casting one to string is a fatal.
         // Anything that is not a scalar is simply not a sort key.
@@ -55,7 +62,13 @@ final class TableSort
         $key = is_scalar($rawKey) ? (string) $rawKey : '';
         $direction = strtolower(trim(is_scalar($rawDirection) ? (string) $rawDirection : ''));
 
-        if (!isset($columns[$key])) {
+        $fromColumnHeader = isset($columns[$key]) && in_array($direction, ['asc', 'desc'], true);
+        if (isset($named[$key]) && !$fromColumnHeader) {
+            [$key, $direction] = $named[$key];
+        }
+
+        $requested = isset($columns[$key]);
+        if (!$requested) {
             $key = $defaultKey;
             $direction = '';
         }
@@ -64,7 +77,25 @@ final class TableSort
             $direction = $defaultDirection;
         }
 
-        return new self($key, $direction, $columns, $tiebreaker, $request->get ?? [], $pinned);
+        return new self($key, $direction, $columns, $tiebreaker, $request->get ?? [], $pinned, $requested, $named);
+    }
+
+    /**
+     * Whether the request itself asked for this order, as opposed to the default
+     * applying. Lets a page keep an explicit sort in its links without echoing the default.
+     */
+    public function wasRequested(): bool
+    {
+        return $this->requested;
+    }
+
+    /**
+     * The sort menu choice that matches the current order, or an empty string when
+     * the table is sorted some way the menu has no name for.
+     */
+    public function choice(): string
+    {
+        return (string) (array_search([$this->key, $this->direction], $this->named, true) ?: '');
     }
 
     /**
@@ -128,7 +159,7 @@ final class TableSort
 
     /**
      * Link that sorts by `$key`, keeping every active filter and dropping the
-     * page number — page 4 of the old order means nothing in the new one.
+     * page number, since page 4 of the old order means nothing in the new one.
      */
     public function urlFor(string $basePath, string $key): string
     {

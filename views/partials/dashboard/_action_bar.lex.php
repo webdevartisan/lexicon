@@ -2,14 +2,24 @@
 /**
  * Action bar shared by the post editor and blog settings.
  *
- * It sticks under the topbar on desktop and docks to the bottom edge on mobile.
+ * On desktop it is one row that sticks under the topbar. On a phone the row
+ * splits: back, status and the page's own tools stay at the top of the page,
+ * and the buttons that save dock to the bottom edge where a thumb reaches them.
  * Buttons submit through name="intent", so it works with JavaScript off. A
  * presenter decides which buttons appear and the controller still checks the intent.
  *
  * Expects: $actions (presenter output), $backUrl, optional $showAutosave, optional
- * $visibility (VisibilityPresenter output, shown under the buttons; its go-live
- * button submits a go-live-form the page renders outside its own form)
+ * $visibility (VisibilityPresenter output). Only its action is used, as the first
+ * menu item. A go-live action submits a go-live-form the page renders outside its
+ * own form. The sentence itself belongs to the page, not the bar.
+ *
+ * Optional: $barTools, HTML the page has already escaped, shown after the status.
+ * $barMenuExtras, the same for extra items at the end of the "more" menu.
+ * $primaryAttrs, attributes for the main button.
  */
+$barTools = $barTools ?? '';
+$barMenuExtras = $barMenuExtras ?? '';
+$primaryAttrs = $primaryAttrs ?? [];
 $pillTones = [
     'slate' => 'bg-slate-100 text-slate-600 dark:bg-zink-600 dark:text-zink-200',
     'amber' => 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
@@ -22,6 +32,8 @@ $primary = $actions['primary'];
 $secondary = $actions['secondary'] ?? null;
 $menu = $actions['menu'] ?? [];
 $pill = $actions['pill'];
+$visitAction = $visibility['action'] ?? null;
+$menuItemClass = 'flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-600 transition-colors hover:bg-slate-50 dark:text-zink-200 dark:hover:bg-zink-500';
 
 $primaryClass = $primary['variant'] === 'green'
     ? 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700 hover:border-emerald-700 focus:ring-emerald-100 dark:focus:ring-emerald-500/20'
@@ -29,12 +41,9 @@ $primaryClass = $primary['variant'] === 'green'
 ?>
 <div
   data-actionbar
-  class="sticky top-header z-30 mb-4 rounded-lg border border-slate-200 bg-white/95 px-4 py-2.5 shadow-sm backdrop-blur
-         dark:border-zink-600 dark:bg-zink-700/95
-         max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:top-auto max-lg:z-40 max-lg:mb-0 max-lg:rounded-none
-         max-lg:border-x-0 max-lg:border-b-0 max-lg:shadow-[0_-2px_10px_rgba(0,0,0,0.08)]
-         max-lg:pb-[calc(0.625rem+env(safe-area-inset-bottom))]">
-  <div class="flex items-center gap-2">
+  class="mb-4 lg:sticky lg:top-header lg:z-30 lg:flex lg:items-center lg:gap-2 lg:rounded-lg lg:border lg:border-slate-200
+         lg:bg-white/95 lg:px-4 lg:py-2.5 lg:shadow-sm lg:backdrop-blur lg:dark:border-zink-600 lg:dark:bg-zink-700/95">
+  <div class="flex min-w-0 items-center gap-2 lg:grow">
 
     <a href="<?= e(lurl($backUrl ?? '/dashboard/post')) ?>"
        class="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-200 px-2.5 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 max-lg:size-11 max-lg:justify-center max-lg:px-0 dark:border-zink-500 dark:text-zink-200 dark:hover:bg-zink-600"
@@ -48,17 +57,24 @@ $primaryClass = $primary['variant'] === 'green'
     </span>
 
     <?php if (!empty($showAutosave)) { ?>
-    <div id="autosave-indicator" class="flex items-center gap-1.5 text-xs text-slate-500 max-lg:hidden dark:text-zink-400" style="display: none;">
+    <div id="autosave-indicator" class="flex min-w-0 items-center gap-1.5 text-xs text-slate-500 dark:text-zink-400" style="display: none;">
       <svg class="size-3.5 text-emerald-600 dark:text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
       </svg>
-      <span id="autosave-message"></span>
+      <span id="autosave-message" class="truncate"></span>
     </div>
     <?php } ?>
 
     <div class="grow"></div>
 
-    <?php if ($menu !== []) { ?>
+    <?= $barTools ?>
+  </div>
+
+  <div class="flex items-center gap-2 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-40 max-lg:border-t max-lg:border-slate-200
+              max-lg:bg-white/95 max-lg:px-4 max-lg:pt-2.5 max-lg:shadow-[0_-2px_10px_rgba(0,0,0,0.08)] max-lg:backdrop-blur
+              max-lg:pb-[calc(0.625rem+env(safe-area-inset-bottom))] max-lg:dark:border-zink-600 max-lg:dark:bg-zink-700/95">
+
+    <?php if ($menu !== [] || $visitAction !== null || $barMenuExtras !== '') { ?>
     <details data-actionbar-menu class="shrink-0 lg:relative">
       <summary
         class="flex cursor-pointer list-none items-center justify-center rounded-md border border-slate-200 px-2.5 py-2 text-slate-600 transition-colors hover:bg-slate-50 max-lg:size-11 max-lg:px-0 dark:border-zink-500 dark:text-zink-200 dark:hover:bg-zink-600"
@@ -71,13 +87,24 @@ $primaryClass = $primary['variant'] === 'green'
         role="menu"
         class="absolute z-50 overflow-hidden rounded-md border border-slate-200 bg-white py-1 shadow-lg dark:border-zink-500 dark:bg-zink-600
                bottom-full mb-1 max-lg:inset-x-3 lg:bottom-auto lg:top-full lg:mb-0 lg:mt-1 lg:w-56 lg:ltr:right-0 lg:rtl:left-0">
+        <?php if ($visitAction !== null && $visitAction['method'] === 'GET') { ?>
+        <a href="<?= e(base_url().$visitAction['url']) ?>" target="_blank" rel="noopener" role="menuitem" class="<?= $menuItemClass ?>">
+          <i data-lucide="external-link" class="size-4 shrink-0" aria-hidden="true"></i>
+          <?= e($t($visitAction['labelKey'])) ?>
+        </a>
+        <?php } elseif ($visitAction !== null) { ?>
+        <button type="submit" form="go-live-form" role="menuitem" class="<?= $menuItemClass ?>">
+          <i data-lucide="globe" class="size-4 shrink-0" aria-hidden="true"></i>
+          <?= e($t($visitAction['labelKey'])) ?>
+        </button>
+        <?php } ?>
         <?php foreach ($menu as $item) { ?>
-        <button type="submit" name="intent" value="<?= e($item['intent']) ?>" role="menuitem"
-          class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-600 transition-colors hover:bg-slate-50 dark:text-zink-200 dark:hover:bg-zink-500">
+        <button type="submit" name="intent" value="<?= e($item['intent']) ?>" role="menuitem" class="<?= $menuItemClass ?>">
           <i data-lucide="<?= e($item['icon']) ?>" class="size-4 shrink-0" aria-hidden="true"></i>
           <?= e($item['label']) ?>
         </button>
         <?php } ?>
+        <?= $barMenuExtras ?>
       </div>
     </details>
     <?php } ?>
@@ -92,6 +119,9 @@ $primaryClass = $primary['variant'] === 'green'
 
     <button type="submit" name="intent" value="<?= e($primary['intent']) ?>"
       data-actionbar-primary
+      <?php foreach ($primaryAttrs as $attrName => $attrValue) { ?>
+      <?= e($attrName) ?>="<?= e($attrValue) ?>"
+      <?php } ?>
       <?php if (isset($primary['later'], $primary['now'])) { ?>
       data-label-later="<?= e($primary['later']['label']) ?>" data-icon-later="<?= e($primary['later']['icon']) ?>"
       data-label-now="<?= e($primary['now']['label']) ?>" data-icon-now="<?= e($primary['now']['icon']) ?>"
@@ -102,10 +132,5 @@ $primaryClass = $primary['variant'] === 'green'
     </button>
 
   </div>
-  <?php if (!empty($visibility)) { ?>
-  <div class="mt-2 border-t border-slate-100 pt-2 dark:border-zink-600">
-    {% cmp="visibility-line" line="{$visibility}" formId="go-live-form" %}
-  </div>
-  <?php } ?>
 </div>
 <script src="<?= e(versioned_asset('/cp-assets/js/action-bar.js')) ?>"></script>

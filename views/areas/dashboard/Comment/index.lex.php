@@ -1,6 +1,6 @@
 {% extends "back.lex.php" %}
 
-{% block title %}Comments{% endblock %}
+{% block title %}{{ t('navigation.comments') }}{% endblock %}
 {% block subtitle %}<span class="hidden sm:inline"><?php if (!empty($autoPublish)) { ?>Moderate comments on this blog. New ones are published straight away, and you can hold or remove them here.<?php } else { ?>Moderate comments on this blog. New ones show up as <span class="font-medium">pending</span> until you approve them.<?php } ?></span>{% endblock %}
 
 {% block body %}

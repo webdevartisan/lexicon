@@ -17,7 +17,28 @@
 {% set metaDescLabel = t('blog.form.fields.metaDescription.label') %}
 {% set metaDescPlaceholder = t('blog.form.fields.metaDescription.placeholder') %}
 {% set localeLabel = t('blog.form.fields.locale.label') %}
-{% set timezoneLabel = t('blog.form.fields.timezone.label') %}
+{% set translationsLabel = t('blog.form.fields.translationsEnabled.label') %}
+{% set translationsHelp = t('blog.form.fields.translationsEnabled.help') %}
+{% set commentsLabel = t('blog.form.fields.allowComments.label') %}
+{% set commentsHelp = t('blog.form.fields.allowComments.help') %}
+{% set instantLabel = t('blog.form.fields.instantComments.label') %}
+{% set instantHelp = t('blog.form.fields.instantComments.help') %}
+{% set repliesLabel = t('blog.form.fields.allowReplies.label') %}
+{% set repliesHelp = t('blog.form.fields.allowReplies.help') %}
+{% set workflowLabel = t('blog.form.fields.workflowEnabled.label') %}
+{% set workflowHelp = t('blog.form.fields.workflowEnabled.help') %}
+{% set indexingLabel = t('blog.form.fields.allowIndexing.label') %}
+<?php
+$translationsOn = !empty($settings['translations_enabled']);
+$commentsOn = !empty($settings['comments_enabled']);
+$instantOn = !empty($settings['comments_auto_publish']);
+$repliesOn = !empty($settings['replies_auto_publish']);
+$workflowOn = !empty($settings['workflow_enabled']);
+$indexingOn = !empty($settings['indexable']);
+// Only Identity starts open, but a rejected field must not hide inside a folded section
+$localizationOpen = !empty($errors['locale']);
+$seoOpen = !empty($errors['meta_title']) || !empty($errors['meta_description']);
+?>
 
 <div class="container-fluid group-data-contentboxed:max-w-boxed mx-auto">
 
@@ -43,218 +64,73 @@
     id="blog-settings-form"
     method="post"
     action="/dashboard/blogs/{{ blog.id }}/update"
-    class="<?= empty($visibility) ? 'max-lg:pb-20' : 'max-lg:pb-36' ?>">
+    class="max-lg:pb-20">
     <input type="hidden" name="_method" value="PUT">
-    <input type="hidden" name="active_section" id="active_section" value="general">
     {{ csrf_field() }}
 
     {% include "partials/dashboard/_action_bar.lex.php" %}
 
-    <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600 mb-6">
-      <div class="p-4 md:p-5">
-        <h2 class="mb-2 text-sm font-semibold text-slate-900 dark:text-zink-100">{{ t('blog.settings.address.label') }}</h2>
-        {% cmp="url-with-open-button" previewUrl="{$blogUrl}" %}
-        <p class="mt-2 text-xs text-slate-500 dark:text-zink-300">{{ t('blog.settings.address.help') }}</p>
-      </div>
-    </section>
+    <div class="bg-white border border-slate-200 rounded-lg shadow-sm divide-y divide-slate-200 dark:bg-zink-700 dark:border-zink-600 dark:divide-zink-600 mb-6">
 
-    <div class="flex flex-wrap gap-1 mb-6 border-b border-slate-200 dark:border-zink-600" role="tablist" aria-label="{{ t('blog.settings.pageTitle') }}">
-      <button type="button" data-settings-tab="general" role="tab" class="px-4 py-2.5 -mb-px text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-custom-500 dark:text-zink-300">
-        {{ t('blog.settings.tabs.general') }}
-      </button>
-      <button type="button" data-settings-tab="seo" role="tab" class="px-4 py-2.5 -mb-px text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-custom-500 dark:text-zink-300">
-        {{ t('blog.settings.tabs.seo') }}
-      </button>
-      <button type="button" data-settings-tab="discussion" role="tab" class="px-4 py-2.5 -mb-px text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-custom-500 dark:text-zink-300">
-        {{ t('blog.settings.tabs.discussion') }}
-      </button>
+      <?php ob_start(); ?>
+      <?php $value = $blog['blog_name'] ?? ''; ?>
+      {% cmp="input" type="text" name="name" label="{$nameLabel}" value="{$value}" placeholder="{$namePlaceholder}" required="true" %}
+
+      <?php $value = $blog['description'] ?? ''; ?>
+      {% cmp="input" type="textarea" name="description" label="{$descLabel}" value="{$value}" rows="4" placeholder="{$descPlaceholder}" %}
+      <?php $body = ob_get_clean(); ?>
+      {% cmp="settings-section" id="general" titleKey="blog.form.sections.identity.title" descriptionKey="blog.form.sections.identity.description" body="{$body}" open="true" %}
+
+      <?php ob_start(); ?>
+      <?php $value = $current_locale ?? ''; ?>
+      {% cmp="select" name="locale" options="{$locales}" label="{$localeLabel}" selectedKey="{$value}" %}
+
+      {% cmp="setting-toggle" name="translations_enabled" label="{$translationsLabel}" help="{$translationsHelp}" checked="{$translationsOn}" %}
+      <?php $body = ob_get_clean(); ?>
+      {% cmp="settings-section" id="localization" titleKey="blog.form.sections.localization.title" descriptionKey="blog.form.sections.localization.description" body="{$body}" open="{$localizationOpen}" %}
+
+      <?php ob_start(); ?>
+      <div class="peer">
+        {% cmp="setting-toggle" name="allow_comments" label="{$commentsLabel}" help="{$commentsHelp}" checked="{$commentsOn}" %}
+      </div>
+
+      <div class="hidden space-y-4 ltr:pl-6 rtl:pr-6 peer-has-[:checked]:block">
+        {% cmp="setting-toggle" name="comments_auto_publish" label="{$instantLabel}" help="{$instantHelp}" checked="{$instantOn}" %}
+        {% cmp="setting-toggle" name="replies_auto_publish" label="{$repliesLabel}" help="{$repliesHelp}" checked="{$repliesOn}" %}
+      </div>
+      <?php $body = ob_get_clean(); ?>
+      {% cmp="settings-section" id="discussion" titleKey="blog.form.sections.discussion.title" descriptionKey="blog.form.sections.discussion.description" body="{$body}" %}
+
+      <?php ob_start(); ?>
+      {% cmp="setting-toggle" name="workflow_enabled" label="{$workflowLabel}" help="{$workflowHelp}" checked="{$workflowOn}" %}
+      <?php $body = ob_get_clean(); ?>
+      {% cmp="settings-section" id="workflow" titleKey="blog.form.sections.workflow.title" descriptionKey="blog.form.sections.workflow.description" body="{$body}" %}
+
+      <?php ob_start(); ?>
+      <?php $value = $settings['meta_title'] ?? ''; ?>
+      {% cmp="input" type="text" name="meta_title" label="{$metaTitleLabel}" value="{$value}" placeholder="{$metaTitlePlaceholder}" %}
+
+      <?php $value = $settings['meta_description'] ?? ''; ?>
+      {% cmp="input" type="textarea" name="meta_description" label="{$metaDescLabel}" value="{$value}" rows="3" placeholder="{$metaDescPlaceholder}" %}
+
+      {% cmp="setting-toggle" name="allow_indexing" label="{$indexingLabel}" checked="{$indexingOn}" %}
+      <?php $body = ob_get_clean(); ?>
+      {% cmp="settings-section" id="seo" titleKey="blog.form.sections.seo.title" descriptionKey="blog.form.sections.seo.description" body="{$body}" open="{$seoOpen}" %}
     </div>
 
-    <div>
-
-        <!-- ============ General ============ -->
-        <div data-settings-panel="general">
-          <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600 mb-6">
-            <div class="p-4 border-b border-slate-200 dark:border-zink-600">
-              <h2 class="text-sm font-semibold text-slate-900 dark:text-zink-100">{{ t('blog.form.sections.identity.title') }}</h2>
-              <p class="mt-1 text-xs text-slate-500 dark:text-zink-300">{{ t('blog.form.sections.identity.description') }}</p>
-            </div>
-            <div class="p-4 space-y-4 md:p-5">
-              <?php $value = $blog['blog_name'] ?? ''; ?>
-              {% cmp="input" type="text" name="name" label="{$nameLabel}" value="{$value}" placeholder="{$namePlaceholder}" required="true" %}
-
-              <?php $value = $blog['description'] ?? ''; ?>
-              {% cmp="input" type="textarea" name="description" label="{$descLabel}" value="{$value}" rows="4" placeholder="{$descPlaceholder}" %}
-            </div>
-          </section>
-
-          <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600 mb-6">
-            <div class="p-4 border-b border-slate-200 dark:border-zink-600">
-              <h2 class="text-sm font-semibold text-slate-900 dark:text-zink-100">{{ t('blog.form.sections.localization.title') }}</h2>
-              <p class="mt-1 text-xs text-slate-500 dark:text-zink-300">{{ t('blog.form.sections.localization.description') }}</p>
-            </div>
-            <div class="p-4 space-y-4 md:p-5">
-              <div class="grid gap-4 md:grid-cols-2">
-                <div>
-                  <?php $value = $current_locale ?? ''; ?>
-                  {% cmp="select" name="locale" options="{$locales}" label="{$localeLabel}" selectedKey="{$value}" %}
-                </div>
-                <div>
-                  <?php $value = $settings['timezone'] ?? 'UTC'; ?>
-                  {% cmp="select" name="timezone" groups="{$timezones}" label="{$timezoneLabel}" selectedKey="{$value}" %}
-                </div>
-              </div>
-
-              <div class="pt-3 border-t border-dashed border-slate-200 dark:border-zink-600">
-                <div class="flex items-start gap-2">
-                  <input id="translations_enabled" name="translations_enabled" type="checkbox" value="1"
-                    class="w-4 h-4 mt-0.5 border rounded text-custom-500 border-slate-300 dark:border-zink-600"
-                    {% if settings.translations_enabled|notempty %}checked{% endif %}>
-                  <div>
-                    <label for="translations_enabled" class="text-xs font-medium text-slate-800 dark:text-zink-100">
-                      {{ t('blog.form.fields.translationsEnabled.label') }}
-                    </label>
-                    <p class="mt-1 text-[11px] text-slate-500 dark:text-zink-300">
-                      {{ t('blog.form.fields.translationsEnabled.help') }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- Danger Zone -->
-          <div class="card border-red-200 dark:border-red-800">
-            <div class="card-body bg-red-50 dark:bg-red-900/10">
-              <div class="flex items-start gap-3">
-                <div class="flex items-center justify-center size-10 bg-red-100 dark:bg-red-500/20 rounded-md shrink-0">
-                  <i data-lucide="alert-triangle" class="size-5 text-red-500"></i>
-                </div>
-                <div class="grow">
-                  <h6 class="mb-2 text-15 text-red-600 dark:text-red-400">{{ t('blog.dangerZone.title') }}</h6>
-                  <p class="text-slate-500 dark:text-zink-300 mb-3">
-                    {{ t('blog.dangerZone.description') }}
-                  </p>
-                  <button
-                    data-modal-target="deleteBlogModal"
-                    data-blog-id="<?= $blog['id'] ?>"
-                    type="button"
-                    class="text-white btn bg-red-500 border-red-500 hover:text-white hover:bg-red-600 hover:border-red-600 focus:text-white focus:bg-red-600 focus:border-red-600 focus:ring focus:ring-red-100 active:text-white active:bg-red-600 active:border-red-600 active:ring active:ring-red-100 dark:ring-red-400/20">
-                    <i data-lucide="trash-2" class="inline-block size-4 mr-1"></i>
-                    {{ t('blog.dangerZone.deleteButton') }}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ============ SEO ============ -->
-        <div data-settings-panel="seo" class="hidden">
-          <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600 mb-6">
-            <div class="p-4 border-b border-slate-200 dark:border-zink-600">
-              <h2 class="text-sm font-semibold text-slate-900 dark:text-zink-100">{{ t('blog.form.sections.seo.title') }}</h2>
-              <p class="mt-1 text-xs text-slate-500 dark:text-zink-300">{{ t('blog.form.sections.seo.description') }}</p>
-            </div>
-            <div class="p-4 space-y-4 md:p-5">
-              <?php $value = $settings['meta_title'] ?? ''; ?>
-              {% cmp="input" type="text" name="meta_title" label="{$metaTitleLabel}" value="{$value}" placeholder="{$metaTitlePlaceholder}" %}
-
-              <?php $value = $settings['meta_description'] ?? ''; ?>
-              {% cmp="input" type="textarea" name="meta_description" label="{$metaDescLabel}" value="{$value}" rows="3" placeholder="{$metaDescPlaceholder}" %}
-
-              <div class="flex items-center gap-2">
-                <input id="allow_indexing" name="allow_indexing" type="checkbox" value="1"
-                  class="w-4 h-4 border rounded text-custom-500 border-slate-300 dark:border-zink-600"
-                  {% if settings.indexable|notempty %}checked{% endif %}>
-                <label for="allow_indexing" class="text-xs text-slate-700 dark:text-zink-100">
-                  {{ t('blog.form.fields.allowIndexing.label') }}
-                </label>
-              </div>
-            </div>
-          </section>
-        </div>
-
-        <!-- ============ Discussion & Workflow ============ -->
-        <div data-settings-panel="discussion" class="hidden">
-          <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600 mb-6">
-            <div class="p-4 border-b border-slate-200 dark:border-zink-600">
-              <h2 class="text-sm font-semibold text-slate-900 dark:text-zink-100">{{ t('blog.form.sections.discussion.title') }}</h2>
-              <p class="mt-1 text-xs text-slate-500 dark:text-zink-300">{{ t('blog.form.sections.discussion.description') }}</p>
-            </div>
-            <div class="p-4 space-y-4 md:p-5">
-              <div>
-                <div class="flex items-start gap-2">
-                  <input id="allow_comments" name="allow_comments" type="checkbox" value="1"
-                    class="w-4 h-4 mt-0.5 border rounded text-custom-500 border-slate-300 dark:border-zink-600"
-                    {% if settings.comments_enabled|notempty %}checked{% endif %}>
-                  <div>
-                    <label for="allow_comments" class="text-xs font-medium text-slate-800 dark:text-zink-100">
-                      {{ t('blog.form.fields.allowComments.label') }}
-                    </label>
-                    <p class="mt-1 text-[11px] text-slate-500 dark:text-zink-300">
-                      {{ t('blog.form.fields.allowComments.help') }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="pt-3 border-t border-dashed border-slate-200 dark:border-zink-600">
-                <div class="flex items-start gap-2">
-                  <input id="comments_auto_publish" name="comments_auto_publish" type="checkbox" value="1"
-                    class="w-4 h-4 mt-0.5 border rounded text-custom-500 border-slate-300 dark:border-zink-600"
-                    {% if settings.comments_auto_publish|notempty %}checked{% endif %}>
-                  <div>
-                    <label for="comments_auto_publish" class="text-xs font-medium text-slate-800 dark:text-zink-100">
-                      {{ t('blog.form.fields.instantComments.label') }}
-                    </label>
-                    <p class="mt-1 text-[11px] text-slate-500 dark:text-zink-300">
-                      {{ t('blog.form.fields.instantComments.help') }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="pt-3 border-t border-dashed border-slate-200 dark:border-zink-600">
-                <div class="flex items-start gap-2">
-                  <input id="replies_auto_publish" name="replies_auto_publish" type="checkbox" value="1"
-                    class="w-4 h-4 mt-0.5 border rounded text-custom-500 border-slate-300 dark:border-zink-600"
-                    {% if settings.replies_auto_publish|notempty %}checked{% endif %}>
-                  <div>
-                    <label for="replies_auto_publish" class="text-xs font-medium text-slate-800 dark:text-zink-100">
-                      {{ t('blog.form.fields.allowReplies.label') }}
-                    </label>
-                    <p class="mt-1 text-[11px] text-slate-500 dark:text-zink-300">
-                      {{ t('blog.form.fields.allowReplies.help') }}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section class="bg-white border border-slate-200 rounded-lg shadow-sm dark:bg-zink-700 dark:border-zink-600 mb-6">
-            <div class="p-4 border-b border-slate-200 dark:border-zink-600">
-              <h2 class="text-sm font-semibold text-slate-900 dark:text-zink-100">{{ t('blog.form.sections.workflow.title') }}</h2>
-              <p class="mt-1 text-xs text-slate-500 dark:text-zink-300">{{ t('blog.form.sections.workflow.description') }}</p>
-            </div>
-            <div class="p-4 md:p-5">
-              <div class="flex items-start gap-2">
-                <input id="workflow_enabled" name="workflow_enabled" type="checkbox" value="1"
-                  class="w-4 h-4 mt-0.5 border rounded text-custom-500 border-slate-300 dark:border-zink-600"
-                  {% if settings.workflow_enabled|notempty %}checked{% endif %}>
-                <div>
-                  <label for="workflow_enabled" class="text-xs font-medium text-slate-800 dark:text-zink-100">
-                    {{ t('blog.form.fields.workflowEnabled.label') }}
-                  </label>
-                  <p class="mt-1 text-[11px] text-slate-500 dark:text-zink-300">
-                    {{ t('blog.form.fields.workflowEnabled.help') }}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
+    <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border border-red-200 rounded-lg dark:border-red-800">
+      <div class="min-w-0">
+        <h2 class="text-sm font-semibold text-red-600 dark:text-red-400">{{ t('blog.dangerZone.title') }}</h2>
+        <p class="mt-1 text-xs text-slate-500 dark:text-zink-300">{{ t('blog.dangerZone.description') }}</p>
+      </div>
+      <button
+        data-modal-target="deleteBlogModal"
+        data-blog-id="<?= (int) $blog['id'] ?>"
+        type="button"
+        class="btn shrink-0 text-red-600 bg-white border-red-300 hover:text-red-700 hover:bg-red-50 hover:border-red-400 dark:bg-transparent dark:text-red-400 dark:border-red-700 dark:hover:bg-red-900/20">
+        <i data-lucide="trash-2" class="inline-block size-4 mr-1"></i>
+        {{ t('blog.dangerZone.deleteButton') }}
+      </button>
     </div>
   </form>
 
@@ -266,39 +142,15 @@
 <script src="<?= e(versioned_asset('/cp-assets/js/modal.js')) ?>"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/delete-blog-modal.js')) ?>"></script>
 <script nonce="<?= csp_nonce() ?>">
-  document.addEventListener("DOMContentLoaded", function () {
-    var sections = ['general', 'seo', 'discussion'];
-    var tabs = Array.prototype.slice.call(document.querySelectorAll('[data-settings-tab]'));
-    var panels = Array.prototype.slice.call(document.querySelectorAll('[data-settings-panel]'));
-    var activeInput = document.getElementById('active_section');
-    var activeClasses = ['border-custom-500', 'text-custom-500'];
-
-    function activate(name, updateHash) {
-      if (sections.indexOf(name) === -1) name = 'general';
-
-      tabs.forEach(function (tab) {
-        var isActive = tab.getAttribute('data-settings-tab') === name;
-        activeClasses.forEach(function (cls) { tab.classList.toggle(cls, isActive); });
-        tab.classList.toggle('border-transparent', !isActive);
-        tab.classList.toggle('text-slate-500', !isActive);
-        tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
-      });
-
-      panels.forEach(function (panel) {
-        panel.classList.toggle('hidden', panel.getAttribute('data-settings-panel') !== name);
-      });
-
-      if (activeInput) activeInput.value = name;
-      if (updateHash) history.replaceState(null, '', '#' + name);
+  // A link such as settings#discussion must unfold the section it points at
+  function openLinkedSection() {
+    var target = document.getElementById(location.hash.slice(1));
+    if (target && target.tagName === 'DETAILS') {
+      target.open = true;
+      target.scrollIntoView();
     }
-
-    tabs.forEach(function (tab) {
-      tab.addEventListener('click', function () {
-        activate(tab.getAttribute('data-settings-tab'), true);
-      });
-    });
-
-    activate((location.hash || '').replace('#', ''), false);
-  });
+  }
+  document.addEventListener('DOMContentLoaded', openLinkedSection);
+  window.addEventListener('hashchange', openLinkedSection);
 </script>
 {% endblock %}

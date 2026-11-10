@@ -22,6 +22,8 @@
   --acct-danger: var(--chrome-light-danger);
   --acct-field-bg: var(--chrome-light-bg);
   --acct-field-shadow: 0 1px 2px rgba(0, 0, 0, .08);
+  /* A field's edge is the only thing marking where to type, so it clears 3:1 (WCAG 1.4.11), unlike --acct-line. */
+  --acct-field-line: #7d8375;
   --acct-track: #d4d4d8;
   --acct-knob: #fff;
 }
@@ -45,6 +47,7 @@
   --acct-danger: var(--chrome-dark-danger);
   --acct-field-bg: transparent;
   --acct-field-shadow: none;
+  --acct-field-line: #71717a;
   --acct-track: #52525b;
   --acct-knob: #fff;
 }
@@ -155,7 +158,7 @@
 
 .lx-account-nav svg { flex: none; width: 1.15rem; height: 1.15rem; }
 
-/* Only the modal on a phone shows it; the full page and the side column list every page. */
+/* Shown only on a phone, here in the modal and in 22-account.css on the full page. */
 .lx-account-nav-toggle { display: none; }
 
 @media (--lx-below-md) {
@@ -254,7 +257,7 @@
   min-height: 0;
   margin: 0;
   padding: .5rem .75rem;
-  border: 1px solid var(--acct-line);
+  border: 1px solid var(--acct-field-line);
   border-radius: var(--lx-radius-md);
   background: var(--acct-field-bg);
   box-shadow: var(--acct-field-shadow);

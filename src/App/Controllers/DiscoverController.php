@@ -19,9 +19,10 @@ class DiscoverController extends AppController
 
     public function index(): Response
     {
-        $tab = $this->request->get['tab'] ?? 'blogs';
+        // Posts lead because Discover is where people find something to read
+        $tab = $this->request->get['tab'] ?? 'posts';
         if (!in_array($tab, ['blogs', 'posts'], true)) {
-            $tab = 'blogs';
+            $tab = 'posts';
         }
 
         $searchQuery = trim($this->request->get['q'] ?? '');
@@ -37,11 +38,16 @@ class DiscoverController extends AppController
                 : $this->blogsData($searchQuery, $page);
         }
 
+        // Each tab opens with its own picks; a search or a later page shows results only
+        $showFeatured = $searchQuery === '' && $page === 1;
+
         return $this->view($data + [
             'tab' => $tab,
             'searchQuery' => $searchQuery,
             'searchThrottled' => $throttled,
-            'featuredCreators' => $this->blogModel->getFeaturedCreators(20),
+            'featuredPosts' => $showFeatured && $tab === 'posts' ? $this->publishedPosts->findPlatformPicks(6) : [],
+            'featuredBlogs' => $showFeatured && $tab === 'blogs' ? $this->blogModel->getFeaturedCreators(4) : [],
+            'navMode' => 'over',
         ]);
     }
 
@@ -81,8 +87,8 @@ class DiscoverController extends AppController
     private function postsData(string $q, int $page): array
     {
         $result = $q !== ''
-            ? $this->publishedPosts->searchPublishedPosts($q, $page, 8)
-            : $this->publishedPosts->getRecentPublishedWithPagination($page, 8);
+            ? $this->publishedPosts->searchPublishedPosts($q, $page, 12)
+            : $this->publishedPosts->getRecentPublishedWithPagination($page, 12);
 
         return [
             'items' => $result['data'],

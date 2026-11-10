@@ -11,8 +11,8 @@ $section = $accountSection ?? '';
 $items = [
     ['key' => 'profile',       'href' => '/account/profile',       'label' => 'account.nav.profile',
         'icon' => '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'],
-    ['key' => 'public',        'href' => '/account/public',        'label' => 'account.nav.public',
-        'icon' => '<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/>'],
+    ['key' => 'name',          'href' => '/account/name',          'label' => 'account.nav.name',
+        'icon' => '<circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/>'],
     ['key' => 'social',        'href' => '/account/social',        'label' => 'account.nav.social',
         'icon' => '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'],
     ['key' => 'preferences',   'href' => '/account/preferences',   'label' => 'account.nav.preferences',

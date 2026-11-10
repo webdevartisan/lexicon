@@ -19,6 +19,8 @@
 
     // It is printed inside the header's account menu; out there the header's styles would reach the panels.
     document.body.appendChild(dialog);
+    // Menus fold only once this marker says a click can open them again.
+    document.documentElement.setAttribute('data-panel-menus', '');
 
     var body = dialog.querySelector('[data-panel-body]');
     var panelUrl = '';
@@ -46,10 +48,22 @@
         });
     }
 
-    // A panel's own menu button (data-panel-menu) shows the list that follows it.
-    // Each new page brings a fresh, closed one, so only a click or Escape closes it.
+    // A menu button (data-panel-menu) shows the list that follows it, in the modal
+    // and on the full page alike. Each new page brings a fresh, closed one.
     function openMenu() {
-        return body.querySelector('[data-panel-menu][aria-expanded="true"]');
+        return document.querySelector('[data-panel-menu][aria-expanded="true"]');
+    }
+
+    // Any click shuts the open menu, except the one on its own button, which toggles it.
+    function toggleMenus(e) {
+        var toggle = e.target.closest('[data-panel-menu]');
+        var open = openMenu();
+        if (open && open !== toggle) {
+            open.setAttribute('aria-expanded', 'false');
+        }
+        if (toggle) {
+            toggle.setAttribute('aria-expanded', toggle === open ? 'false' : 'true');
+        }
     }
 
     function show(response, html) {
@@ -126,6 +140,8 @@
             return;
         }
 
+        toggleMenus(e);
+
         var link = e.target.closest('a[data-panel], a[data-panel-link]');
         if (!link || link.target) {
             return;
@@ -144,16 +160,15 @@
         // The dialog element itself is only hit on the backdrop.
         if (e.target === dialog || e.target.closest('[data-panel-close]')) {
             dialog.close();
-            return;
         }
+    });
 
-        var toggle = e.target.closest('[data-panel-menu]');
+    // On the full page Escape only has the menu to shut; inside the modal the cancel handler below does it.
+    document.addEventListener('keydown', function (e) {
         var open = openMenu();
-        if (open && open !== toggle) {
+        if (e.key === 'Escape' && open && !dialog.contains(open)) {
             open.setAttribute('aria-expanded', 'false');
-        }
-        if (toggle) {
-            toggle.setAttribute('aria-expanded', toggle === open ? 'false' : 'true');
+            open.focus();
         }
     });
 

@@ -49,11 +49,10 @@ class PostController extends AppController
     ) {}
 
     /**
-     * Toggle the front page showcase flag on a post.
+     * Toggle the platform pick flag that feeds the front page and Discover.
      *
-     * This is the only gate between user content and the site front page,
-     * so the change is audit logged and the cached front page is purged
-     * immediately.
+     * This is the only gate between user content and those two pages, so the
+     * change is audit logged and both cached pages are purged immediately.
      */
     public function featureHome(string $id): Response
     {
@@ -80,9 +79,10 @@ class PostController extends AppController
         );
 
         $this->publicCache->purgeHome();
+        $this->publicCache->purgeDiscover();
         $this->flash('success', $on
-            ? 'Post is now featured on the front page.'
-            : 'Post removed from the front page.');
+            ? 'Post is now featured on the front page and Discover.'
+            : 'Post removed from the front page and Discover.');
 
         return $this->redirectToList('/admin/posts');
     }

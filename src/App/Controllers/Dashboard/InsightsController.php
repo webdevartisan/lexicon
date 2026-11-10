@@ -81,7 +81,7 @@ final class InsightsController extends AppController
 
         $blogIdInt = (int) $blog->id();
         $canAll = Gate::allows('viewAllAnalytics', $blog, auth()->user());
-        $range = $this->savedView->range((int) auth()->user()['id'], $page, $this->request->get, blog_timezone($blogIdInt));
+        $range = $this->savedView->range((int) auth()->user()['id'], $page, $this->request->get, 'UTC');
         $frame = $this->frame($blog, $range, $canAll);
 
         return $this->view('insights.'.$page, $this->insightsPage->page(
@@ -99,7 +99,7 @@ final class InsightsController extends AppController
         $canAll = Gate::allows('viewAllAnalytics', $blog, auth()->user());
         $post = $this->postInScope($blogIdInt, (int) $postId, $canAll);
 
-        $range = $this->savedView->range((int) auth()->user()['id'], null, $this->request->get, blog_timezone($blogIdInt));
+        $range = $this->savedView->range((int) auth()->user()['id'], null, $this->request->get, 'UTC');
 
         return $this->view('insights.post', $this->insightsPage->post(
             $post,
@@ -119,7 +119,7 @@ final class InsightsController extends AppController
 
         $scope = $this->exportScope($blogIdInt, $canAll);
         $dimension = (string) ($this->request->get['dimension'] ?? '');
-        $range = AnalyticsRange::fromQuery($this->request->get, blog_timezone($blogIdInt));
+        $range = AnalyticsRange::fromQuery($this->request->get, 'UTC');
         [$columns, $rows] = $this->insightsPage->export($blog, $scope, $dimension, $range);
 
         return $this->csv("insights-{$dimension}-{$range->fromDate()}-{$range->toDate()}.csv", $columns, $rows);

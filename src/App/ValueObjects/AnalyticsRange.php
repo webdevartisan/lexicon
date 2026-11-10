@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\ValueObjects;
 
 /**
- * The date range an Insights page shows, in the blog's timezone, and what it is
+ * The date range an Insights page shows, in the zone it is given, and what it is
  * compared with. A range that fails the checks falls back to the default and
  * sets $rejected.
  */

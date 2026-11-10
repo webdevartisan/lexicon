@@ -15,6 +15,10 @@ use App\Console\Commands\CacheWarmCommand;
 use App\Console\Commands\KeyGenerateCommand;
 use App\Console\Commands\LiftDueSuspensionsCommand;
 use App\Console\Commands\MailQueueWorkCommand;
+use App\Console\Commands\ModuleCacheCommand;
+use App\Console\Commands\ModuleInstallCommand;
+use App\Console\Commands\ModuleResumeCommand;
+use App\Console\Commands\ModuleUninstallCommand;
 use App\Console\Commands\NotificationPruneCommand;
 use App\Console\Commands\PrivacyPruneCommand;
 use App\Console\Commands\ProcessDueErasuresCommand;
@@ -29,6 +33,8 @@ use App\Console\Commands\SeedModerationCommand;
 use App\Console\Commands\SessionPruneCommand;
 use App\Console\Commands\TwoFactorResetCommand;
 use Framework\Console\Kernel as ConsoleKernel;
+use Framework\Core\Container;
+use Framework\Modules\ModuleBooter;
 
 /**
  * Application Console Kernel
@@ -42,6 +48,14 @@ use Framework\Console\Kernel as ConsoleKernel;
 class Kernel extends ConsoleKernel
 {
     /**
+     * The promoted property is set before the parent constructor reads commands().
+     */
+    public function __construct(Container $app, private ModuleBooter $modules)
+    {
+        parent::__construct($app);
+    }
+
+    /**
      * Register application commands.
      *
      * We map command names to their handler classes.
@@ -50,6 +64,15 @@ class Kernel extends ConsoleKernel
      * @return array<string, class-string>
      */
     protected function commands(): array
+    {
+        // Core names win; module commands are prefixed with their key, so they never clash anyway
+        return $this->coreCommands() + $this->modules->commands();
+    }
+
+    /**
+     * @return array<string, class-string>
+     */
+    private function coreCommands(): array
     {
         return [
             // Cache management commands
@@ -65,6 +88,12 @@ class Kernel extends ConsoleKernel
 
             // Expired login sessions, hourly
             'session:prune' => SessionPruneCommand::class,
+
+            // Optional modules (Extras): install, remove, rebuild the cache, restart a paused one
+            'module:install' => ModuleInstallCommand::class,
+            'module:uninstall' => ModuleUninstallCommand::class,
+            'module:cache' => ModuleCacheCommand::class,
+            'module:resume' => ModuleResumeCommand::class,
 
             // Deletes personal data past the retention periods in config/privacy.php
             'privacy:prune' => PrivacyPruneCommand::class,

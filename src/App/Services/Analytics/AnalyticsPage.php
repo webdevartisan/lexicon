@@ -26,18 +26,11 @@ final class AnalyticsPage
     ) {}
 
     /**
-     * One of the platform's own pages. Its days are UTC and no blog team or excluded paths apply.
+     * One of the platform's own pages. No blog team or excluded paths apply.
      */
     public static function platform(string $pageType, string $path, string $locale): self
     {
         return new self(null, null, $pageType, $path, $path, $locale, ['analytics_exclude_members' => 0]);
-    }
-
-    public function timezone(): string
-    {
-        $zone = (string) ($this->settings['timezone'] ?? '');
-
-        return $zone !== '' && in_array($zone, \DateTimeZone::listIdentifiers(), true) ? $zone : 'UTC';
     }
 
     /**

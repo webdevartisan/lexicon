@@ -8,7 +8,7 @@
 {% block content %}
 <?php
 $title = e($post['title'] ?? 'Untitled');
-  $date = e($post['published_at'] ?? '');
+  $date = reader_date($post['published_at_raw'] ?? null, 'jS M Y');
   $author = author_byline($post['author_name'], $post['author_handle'], $post['author_profile_handle']);
   $cat = $post['category'] ?? null;
   $catSlug = $post['category_slug'] ?? null;
@@ -38,12 +38,13 @@ $title = e($post['title'] ?? 'Untitled');
     <?php } ?>
 
     <div class="work-hero-byline">
-      <?php if ($author) { ?><span class="work-artist"><?= $author ?><?= $date ? ', '.e(local_datetime($post['published_at_raw'] ?? null, 'Y', blog_timezone((int) ($blog['id'] ?? 0)))) : '' ?></span><?php } ?>
+      <?php if ($author) { ?><span class="work-artist"><?= $author ?><?= $date ? ', '.e(local_datetime($post['published_at_raw'] ?? null, 'Y', 'UTC')) : '' ?></span><?php } ?>
       <a href="<?= lurl('/blog/'.$blogSlug) ?>" class="link-arrow">
         <span<?= $wording->attrs('vernissage::post.backTo', ['blog' => e($blog['blog_name'] ?? '')]) ?>><?= $wording->html('vernissage::post.backTo', ['blog' => e($blog['blog_name'] ?? '')]) ?></span>
         <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
       </a>
     </div>
+    {% slot "post.header-aside" %}
   </div>
 </section>
 
@@ -62,6 +63,7 @@ $title = e($post['title'] ?? 'Untitled');
     <div class="work-essay reveal" data-edit-body>
       <?= $post['content'] ?? '' ?>
     </div>
+    {% slot "post.after-content" %}
 
     <?php if (!empty($post['tags']) && is_array($post['tags'])) { ?>
     <div class="work-tags reveal">

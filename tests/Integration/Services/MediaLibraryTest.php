@@ -10,6 +10,7 @@ use App\Models\PostModel;
 use App\Models\UserModel;
 use App\Resources\BlogResource;
 use App\Services\BlogCacheInvalidator;
+use App\Services\MediaBulkActions;
 use App\Services\MediaReferenceCleaner;
 use App\Services\MediaService;
 use App\Services\MediaUsageResolver;
@@ -175,4 +176,80 @@ it('leaves files it finds on disk without an owner, so erasing whoever looked ca
 
     expect($this->media->backfill($this->blog))->toBe(1)
         ->and($this->mediaRows->findByPathForBlog($this->blog->id(), ltrim($url, '/'))['user_id'])->toBeNull();
+});
+
+it('sorts the library by name or size in either direction, and keeps the old one-word sorts', function () {
+    foreach ([['beta.png', 300], ['Alpha.png', 100], ['gamma.png', 200]] as [$name, $bytes]) {
+        $this->mediaRows->createRecord([
+            'blog_id' => $this->blog->id(),
+            'disk_path' => 'uploads/blogs/'.$this->blog->mediaKey().'/2026/10/'.$name,
+            'url' => '/uploads/blogs/'.$this->blog->mediaKey().'/2026/10/'.$name,
+            'filename' => $name,
+            'original_name' => $name,
+            'size_bytes' => $bytes,
+            'source' => 'upload',
+        ]);
+    }
+    $names = fn (array $filters): array => array_column($this->mediaRows->listForBlog($this->blog->id(), $filters), 'original_name');
+
+    expect($names(['sort' => 'name', 'dir' => 'asc']))->toBe(['Alpha.png', 'beta.png', 'gamma.png'])
+        ->and($names(['sort' => 'name', 'dir' => 'desc']))->toBe(['gamma.png', 'beta.png', 'Alpha.png'])
+        ->and($names(['sort' => 'size', 'dir' => 'asc']))->toBe(['Alpha.png', 'gamma.png', 'beta.png'])
+        ->and($names(['sort' => 'largest']))->toBe(['beta.png', 'gamma.png', 'Alpha.png'])
+        ->and($names(['sort' => 'colour', 'dir' => 'sideways']))->toHaveCount(3);
+});
+
+it('counts the files a filter matches and adds up their size', function () {
+    foreach ([['one.png', 120], ['two.png', 80]] as [$name, $bytes]) {
+        $this->mediaRows->createRecord([
+            'blog_id' => $this->blog->id(),
+            'disk_path' => 'uploads/blogs/'.$this->blog->mediaKey().'/2026/10/'.$name,
+            'url' => '/uploads/blogs/'.$this->blog->mediaKey().'/2026/10/'.$name,
+            'filename' => $name,
+            'original_name' => $name,
+            'size_bytes' => $bytes,
+            'source' => 'upload',
+        ]);
+    }
+
+    expect($this->mediaRows->totalsForBlog($this->blog->id()))->toBe(['count' => 2, 'bytes' => 200])
+        ->and($this->mediaRows->totalsForBlog($this->blog->id(), ['q' => 'two']))->toBe(['count' => 1, 'bytes' => 80])
+        ->and($this->mediaRows->totalsForBlog($this->blog->id(), ['q' => 'none']))->toBe(['count' => 0, 'bytes' => 0]);
+});
+
+it('names only the selected images that are used somewhere before a bulk delete', function () {
+    $bulk = new MediaBulkActions($this->mediaRows, $this->media, new MediaUsageResolver($this->db));
+    $usedId = $this->mediaRows->createRecord([
+        'blog_id' => $this->blog->id(), 'disk_path' => ltrim($this->url, '/'), 'url' => $this->url,
+        'filename' => basename($this->url), 'original_name' => 'harbour.jpg', 'size_bytes' => 10, 'source' => 'branding',
+    ]);
+    $loneUrl = '/uploads/blogs/'.$this->blog->mediaKey().'/2026/10/image-ffffffffffff.png';
+    $loneId = $this->mediaRows->createRecord([
+        'blog_id' => $this->blog->id(), 'disk_path' => ltrim($loneUrl, '/'), 'url' => $loneUrl,
+        'filename' => basename($loneUrl), 'size_bytes' => 10, 'source' => 'upload',
+    ]);
+
+    $found = $bulk->usages([$usedId, (string) $loneId, $usedId], $this->blog);
+
+    expect($found)->toHaveCount(1)
+        ->and($found[0]['id'])->toBe($usedId)
+        ->and($found[0]['name'])->toBe('harbour.jpg')
+        ->and($found[0]['usages'])->not->toBeEmpty()
+        ->and(fn () => $bulk->usages([], $this->blog))->toThrow(InvalidArgumentException::class)
+        ->and(fn () => $bulk->usages(range(1, MediaBulkActions::MAX_ITEMS + 1), $this->blog))->toThrow(InvalidArgumentException::class);
+});
+
+it('bulk deletes only the selected images that belong to the blog', function () {
+    $bulk = new MediaBulkActions($this->mediaRows, $this->media, new MediaUsageResolver($this->db));
+    $other = $this->blogs->getBlog(BlogFactory::new($this->blogs)->create($this->blog->ownerId()));
+    $row = fn (BlogResource $blog, string $name): int => $this->mediaRows->createRecord([
+        'blog_id' => $blog->id(), 'disk_path' => 'uploads/blogs/'.$blog->mediaKey().'/2026/10/'.$name,
+        'url' => '/uploads/blogs/'.$blog->mediaKey().'/2026/10/'.$name, 'filename' => $name, 'size_bytes' => 10, 'source' => 'upload',
+    ]);
+    $mine = [$row($this->blog, 'image-111111111111.png'), $row($this->blog, 'image-222222222222.png')];
+    $theirs = $row($other, 'image-333333333333.png');
+
+    expect($bulk->delete([...$mine, $theirs, 999999], $this->blog))->toBe($mine)
+        ->and($this->mediaRows->findForBlog($mine[0], $this->blog->id()))->toBeNull()
+        ->and($this->mediaRows->findForBlog($theirs, $other->id()))->not->toBeNull();
 });

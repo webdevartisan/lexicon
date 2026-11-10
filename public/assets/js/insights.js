@@ -34,6 +34,7 @@
     var maxDepth = 0;
     var lastActivity = 0;
     var timer = null;
+    var lastSent = '';
     var vitals = {};
 
     function newViewId() {
@@ -148,6 +149,13 @@
         }
 
         var body = { v: viewId, s: Math.round(engagedMs / 1000), d: maxDepth };
+
+        // Hiding the tab and then leaving the page both fire this with the same numbers.
+        var signature = viewId + ':' + body.s + ':' + body.d;
+        if (signature === lastSent) {
+            return;
+        }
+        lastSent = signature;
 
         // Page speed describes the load, so a page restored from the back button doesn't report it again.
         if (viewId === loadViewId) {

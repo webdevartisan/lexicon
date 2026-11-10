@@ -12,6 +12,7 @@ use App\Services\PostCacheInvalidator;
 use App\Services\PublicCacheInvalidator;
 use App\ValueObjects\PostFieldRules;
 use Framework\Database;
+use Framework\Modules\ModuleDuties;
 
 /**
  * Applies an archive plan to a blog: stores its media, then writes its posts.
@@ -37,12 +38,13 @@ final class BlogArchiveImporter
         private ArchiveMediaStoreInterface $mediaStore,
         private PublicCacheInvalidator $cacheInvalidator,
         private ArchivePostWriter $writer,
+        private ModuleDuties $moduleDuties,
     ) {}
 
     /**
      * @param  array{on_clash: string, keep_status: bool, work_dir: string, only?: list<int>}  $options  `only` lists the positions of the posts to import; the rest are left out
      * @param  callable(string, int): void|null  $progress  Called with a stage name and a running count
-     * @return array{created: list<array<string, mixed>>, overwritten: list<array<string, mixed>>, skipped: list<array<string, mixed>>, failed: list<array<string, mixed>>, media: array{stored: int, failed: list<array{name: string, reason: string}>}}
+     * @return array{created: list<array<string, mixed>>, overwritten: list<array<string, mixed>>, skipped: list<array<string, mixed>>, failed: list<array<string, mixed>>, modules: array{imported: array<string, int>, skipped: list<string>, failed: list<string>}, media: array{stored: int, failed: list<array{name: string, reason: string}>}}
      *
      * @throws ArchiveException When the archive cannot be opened again
      */
@@ -77,11 +79,73 @@ final class BlogArchiveImporter
             }
         }
 
+        $result['modules'] = $this->importModules($plan, $zipPath, (int) $target->id(), $result);
+
         if ($result['created'] !== [] || $result['overwritten'] !== []) {
             $this->purgeCaches($target);
         }
 
         return $result + ['media' => ['stored' => count($urls), 'failed' => $mediaFailures]];
+    }
+
+    /**
+     * Give each module its rows from the archive, with the old post ids mapped to the restored posts.
+     *
+     * @param  array{created: list<array<string, mixed>>, overwritten: list<array<string, mixed>>}  $result
+     * @return array{imported: array<string, int>, skipped: list<string>, failed: list<string>}
+     */
+    private function importModules(ArchivePlan $plan, string $zipPath, int $blogId, array $result): array
+    {
+        if ($plan->modules === []) {
+            return ['imported' => [], 'skipped' => [], 'failed' => []];
+        }
+
+        $postIdMap = [];
+        foreach ([...$result['created'], ...$result['overwritten']] as $item) {
+            if (isset($item['archive_id'], $item['id'])) {
+                $postIdMap[(int) $item['archive_id']] = (int) $item['id'];
+            }
+        }
+
+        $unreadable = [];
+        $rows = $this->moduleRows($plan, $zipPath, $unreadable);
+        $outcome = $this->moduleDuties->importBlog($blogId, $rows, $postIdMap);
+        $outcome['failed'] = [...$outcome['failed'], ...$unreadable];
+
+        return $outcome;
+    }
+
+    /**
+     * The rows file of each module the plan names, as {version, rows}.
+     *
+     * @param  list<string>  $unreadable  Filled with modules whose file is broken or not the expected shape
+     * @return array<string, array{version: int, rows: list<mixed>}>
+     */
+    private function moduleRows(ArchivePlan $plan, string $zipPath, array &$unreadable): array
+    {
+        $zip = ArchiveZip::open($zipPath);
+        $data = [];
+
+        try {
+            foreach ($plan->modules as $key) {
+                try {
+                    $file = $zip->json(ArchiveFormat::modulePath($key));
+                } catch (ArchiveException) {
+                    $file = null;
+                }
+
+                if (is_array($file) && is_int($file['version'] ?? null) && is_array($file['rows'] ?? null)
+                    && array_is_list($file['rows'])) {
+                    $data[$key] = ['version' => $file['version'], 'rows' => $file['rows']];
+                } else {
+                    $unreadable[] = $key;
+                }
+            }
+        } finally {
+            $zip->close();
+        }
+
+        return $data;
     }
 
     /**
@@ -154,6 +218,7 @@ final class BlogArchiveImporter
     {
         $data = $entry['data'];
         $item = ['title' => (string) ($data['title'] ?? ''), 'slug' => (string) ($data['slug'] ?? ''), 'notes' => []];
+        $item['archive_id'] = $data['archive_id'] ?? null;
 
         if ($entry['errors'] !== []) {
             return ['failed', $item + ['reason' => implode(' ', $entry['errors'])]];

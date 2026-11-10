@@ -93,9 +93,9 @@ function updatePlaceholders() {
 }
 
 // Mirrors post_excerpt() in helpers.php so the previews show what readers and search engines get.
-function contentSummary(limit) {
+function contentSummary(limit, source) {
   const field = document.getElementById('content');
-  const html = field ? field.value : '';
+  const html = source !== undefined ? source : (field ? field.value : '');
   if (!html) return '';
 
   const doc = new DOMParser().parseFromString(html.replace(/</g, ' <'), 'text/html');
@@ -108,6 +108,8 @@ function contentSummary(limit) {
 
   return cut.replace(/[\s,;:.-]+$/, '') + '…';
 }
+
+window.contentSummary = contentSummary;
 
 window.refreshPostPreviews = function () {
   updateSeoPreview();
@@ -230,19 +232,14 @@ function initSocialTabs() {
  */
 function initScheduleAwareness() {
   const dateField = document.getElementById('published_at');
-  const primary = document.querySelector('[data-actionbar-primary]');
+  // The bar's main button and the one inside the publish check say the same thing.
+  const primaries = document.querySelectorAll('[data-actionbar-primary][data-label-later]');
   const hint = document.querySelector('[data-schedule-hint]');
   const clearBtn = document.querySelector('[data-clear-schedule]');
   if (!dateField) return;
 
-  const label = primary ? primary.querySelector('[data-primary-label]') : null;
-  const words = primary && primary.dataset.labelLater ? {
-    later: { label: primary.dataset.labelLater, icon: primary.dataset.iconLater },
-    now: { label: primary.dataset.labelNow, icon: primary.dataset.iconNow },
-  } : null;
-
   // Lucide swaps each <i> for an <svg>, so look the icon up every time and start it over.
-  function showIcon(name) {
+  function showIcon(primary, name) {
     const current = primary.querySelector('[data-lucide]');
     if (!current || current.getAttribute('data-lucide') === name) return;
     const icon = document.createElement('i');
@@ -272,15 +269,15 @@ function initScheduleAwareness() {
 
     if (hint) {
       hint.textContent = scheduling
-        ? 'Publishing is held until this time. A sweep runs every minute, so it may go live a moment late.'
-        : 'Leave empty to go live as soon as you publish.';
+        ? 'It goes live at this time, give or take a minute.'
+        : 'Empty means it goes live as soon as you publish.';
     }
 
-    if (!words || !label) return;
-
-    const shown = scheduling ? words.later : words.now;
-    label.textContent = shown.label;
-    showIcon(shown.icon);
+    primaries.forEach((primary) => {
+      const label = primary.querySelector('[data-primary-label]');
+      if (label) label.textContent = scheduling ? primary.dataset.labelLater : primary.dataset.labelNow;
+      showIcon(primary, scheduling ? primary.dataset.iconLater : primary.dataset.iconNow);
+    });
   }
 
   dateField.addEventListener('change', refresh);

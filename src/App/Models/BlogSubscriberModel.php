@@ -119,6 +119,17 @@ class BlogSubscriberModel extends AppModel
     }
 
     /**
+     * Confirmed subscribers who joined in the last few days.
+     */
+    public function countConfirmedSince(int $blogId, int $days): int
+    {
+        $sql = "SELECT COUNT(*) FROM {$this->getTable()}
+                WHERE blog_id = ? AND confirmed_at IS NOT NULL AND confirmed_at >= NOW() - INTERVAL ? DAY";
+
+        return (int) $this->database->query($sql, [$blogId, $days])->fetchColumn();
+    }
+
+    /**
      * Paginated subscriber list for the dashboard management page.
      *
      * @param  string  $q  Optional email search

@@ -20,6 +20,8 @@ use Framework\Exceptions\PageNotFoundException;
  */
 class PageController extends AppController
 {
+    private const CONTACT_SENT = 'contact_sent';
+
     public function __construct(
         private PageModel $pages,
         private SettingModel $settings
@@ -62,13 +64,25 @@ class PageController extends AppController
     }
 
     /**
-     * Contact page: editable intro text plus the message form.
+     * Contact page: editable intro text plus the message form, or the
+     * confirmation once a message has gone.
      */
     public function contact(): Response
     {
-        return $this->view('public.Page.contact', [
+        $sent = (bool) $this->session->pull(self::CONTACT_SENT);
+
+        $response = $this->view('public.Page.contact', [
             'page' => $this->findPageOrFail('contact'),
+            'sent' => $sent,
+            'contactEmail' => (string) site_content('contact.email', ''),
         ]);
+
+        // The confirmation has no form, so the page cache would otherwise keep it and show it to every visitor.
+        if ($sent) {
+            $response->addHeader('Cache-Control', 'private, no-store');
+        }
+
+        return $response;
     }
 
     /**
@@ -84,16 +98,14 @@ class PageController extends AppController
         // Bots fill every field; humans never see this one. Pretend success
         // so the bot learns nothing.
         if (trim((string) $this->request->postParam('website')) !== '') {
-            $this->flash('success', 'Thanks for your message. We will get back to you soon.');
-
-            return $this->redirect('/contact');
+            return $this->contactSent();
         }
 
         $ip = $this->request->ip();
         if (rateLimiter()->tooManyAttempts("contact:ip:{$ip}", 5, 3600)) {
-            $this->flash('error', 'Too many messages. Please try again later.');
+            $this->flash('error', chrome_translate('pages.contactForm.tooMany'));
 
-            return $this->redirect('/contact');
+            return $this->redirect(lurl('/contact'));
         }
 
         $validator = $this->validateOrFail([
@@ -125,14 +137,22 @@ class PageController extends AppController
 
         if (!$sent) {
             error_log('Contact form could not be queued (admin email: '.($adminEmail ?: 'unset').')');
-            $this->flash('error', 'Sorry, your message could not be sent right now. Please try again later.');
+            $this->flash('error', chrome_translate('pages.contactForm.notSent'));
 
-            return $this->redirect('/contact');
+            return $this->redirect(lurl('/contact'));
         }
 
-        $this->flash('success', 'Thanks for your message. We will get back to you soon.');
+        return $this->contactSent();
+    }
 
-        return $this->redirect('/contact');
+    /**
+     * Send the visitor back to the contact page, which then shows the confirmation once.
+     */
+    private function contactSent(): Response
+    {
+        $this->session->set(self::CONTACT_SENT, true);
+
+        return $this->redirect(lurl('/contact'));
     }
 
     /**

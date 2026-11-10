@@ -1,7 +1,6 @@
 {% extends "back.lex.php" %}
 
-{% block title %}Creating New Post{% endblock %}
-{% block subtitle %}Fill in details to create your new post.{% endblock %}
+{% block title %}{{ t('dashboard.actions.newPost') }}{% endblock %}
 
 {% block head %}
 <link rel="stylesheet" href="/cp-assets/css/vendors/dropzone.css">
@@ -34,77 +33,16 @@
 <script src="<?= e(versioned_asset('/cp-assets/js/flatpickr.init.js')) ?>"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/autosave.js')) ?>"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/pages/post.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/pages/post-tags.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/pages/post-editor.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/title-field.js')) ?>"></script>
+<script src="<?= e(versioned_asset('/cp-assets/js/tooltip.js')) ?>"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/media-picker.js')) ?>"></script>
 <script src="<?= e(versioned_asset('/cp-assets/js/slug-field.js')) ?>"></script>
 
 <script nonce="<?= csp_nonce() ?>">
   document.addEventListener("DOMContentLoaded", function () {
     SlugField.bind({ source: 'title', target: 'slug', min: 2, max: 100, checkUrl: '<?= e(lurl('/dashboard/slug-check')) ?>?type=post&blog_id=<?= (int) ($blog['id'] ?? 0) ?>' });
-
-    const excerptField = document.getElementById('excerpt');
-
-  if (!excerptField || typeof tinymce === 'undefined') {
-    return;
-  }
-
-  let isExcerptEdited = false;
-
-  excerptField.addEventListener('input', function () {
-    isExcerptEdited = excerptField.value.trim().length > 0;
   });
-
-  function getAutoExcerpt(html) {
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML = html;
-
-    let element = wrapper.firstElementChild;
-
-    while (element && (element.tagName === 'H1' || element.tagName === 'H2')) {
-      element = element.nextElementSibling;
-    }
-
-    while (element && element.tagName !== 'P') {
-      element = element.nextElementSibling;
-    }
-
-    if (!element) {
-      return '';
-    }
-
-    const text = element.textContent.trim();
-    return text.length > 180 ? text.slice(0, 180).trimEnd() + '...' : text;
-  }
-
-  function syncExcerpt() {
-    if (isExcerptEdited) {
-      return;
-    }
-
-    const editor = tinymce.get('content');
-
-    if (!editor) {
-      return;
-    }
-
-    excerptField.value = getAutoExcerpt(editor.getContent());
-  }
-
-  const bindWhenReady = function () {
-    const editor = tinymce.get('content');
-
-    if (!editor) {
-      setTimeout(bindWhenReady, 100);
-      return;
-    }
-
-    editor.on('keyup change input SetContent', syncExcerpt);
-    editor.on('init', syncExcerpt);
-    if (editor.initialized) {
-      syncExcerpt();
-    }
-  };
-
-  bindWhenReady();
-});
 </script>
 {% endblock %}

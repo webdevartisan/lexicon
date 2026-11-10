@@ -177,7 +177,6 @@ class AnalyticsRecorder
         \DateTimeImmutable $now
     ): string {
         $family = $this->agents->classify((string) $request->header('User-Agent', ''));
-        $local = $now->setTimezone(new \DateTimeZone($page->timezone()));
         $arrival = [
             'channel' => $referrer['channel'],
             'referrer_host' => $referrer['host'],
@@ -220,8 +219,8 @@ class AnalyticsRecorder
             'path_hash' => $pathHash,
             'locale' => substr($page->locale, 0, 5),
             'props' => $this->viewProps($page, $payload, $referrer['fromPostId'] !== null),
-            'local_date' => $local->format('Y-m-d'),
-            'local_hour' => (int) $local->format('G'),
+            'local_date' => $now->format('Y-m-d'),
+            'local_hour' => (int) $now->format('G'),
         ] + $arrival);
 
         return $stored ? self::RECORDED : self::DUPLICATE;

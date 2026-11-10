@@ -3,6 +3,15 @@
 
 :root {
   --post-accent: var(--cobalt);
+  /* Module tokens: the only names optional modules read, so they match every theme. */
+  --module-accent: var(--post-accent);
+  --module-ink: var(--carbon);
+  --module-muted: var(--slate);
+  --module-surface: var(--porcelain);
+  --module-rule: var(--rule);
+  --module-font: var(--sans);
+  --module-mono: var(--mono);
+  --module-map-flavor: light;
   --porcelain: #eef0f1;
   --porcelain-2: #e3e6e8;
   --carbon: #17191c;

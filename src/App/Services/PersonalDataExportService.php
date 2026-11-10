@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Services\Analytics\VisitorIdentity;
 use Framework\Database;
+use Framework\Modules\ModuleDuties;
 use RuntimeException;
 
 /**
@@ -19,6 +20,7 @@ class PersonalDataExportService
     public function __construct(
         private Database $database,
         private VisitorIdentity $visitorIdentity,
+        private ModuleDuties $moduleDuties,
     ) {}
 
     /**
@@ -158,6 +160,7 @@ class PersonalDataExportService
                  ORDER BY last_activity DESC",
                 [$userId]
             ),
+            'modules' => $this->moduleDuties->exportUser($userId),
         ];
     }
 

@@ -42,12 +42,12 @@ $I->seeThePageLooksRight('60-reset-link-sent');
 // The member fills in a profile others can see
 $I->loadSessionSnapshot('member');
 $I->amOnPage('/en/account/profile');
-$I->fillField('first_name', 'Robin');
-$I->fillField('last_name', 'Walker');
 $I->fillField('bio', 'Here to test the account pages.');
 $I->click('Save changes');
 $I->waitForText('Profile updated successfully');
-$I->amOnPage('/en/account/public');
+$I->amOnPage('/en/account/name');
+$I->fillField('first_name', 'Robin');
+$I->fillField('last_name', 'Walker');
 $I->checkOption('show_name');
 $I->click('Save changes');
 $I->waitForText('Profile updated successfully');
@@ -100,18 +100,21 @@ $I->waitForJS("return document.querySelector('meta[name=device-zone]').content !
 $I->reloadPage();
 $I->waitForJS("return document.querySelector('#timezone option[value=auto]').textContent.includes('this device:')", 5);
 
-// Preferences, an email change that is cancelled, and notification settings
-$I->selectOption('#timezone', 'Europe/Athens');
+// Preferences, an email change from Security that is cancelled, and notification settings
+$I->chooseFromMenu('#timezone', 'Europe/Athens', 'Athens');
 $I->click('Save changes', 'form[action$="/account/preferences/update"]');
 $I->waitForText('Preferences saved');
-$I->click('.acct-details summary');
-$I->fillField('.acct-details input[type=email]', "walk-moved-{$stamp}@example.test");
-$I->fillField('.acct-details input[type=password]', $newPassword);
+$I->seeThePageLooksRight('63-preferences');
+$I->amOnPage('/en/account/security');
+$I->click('section[aria-labelledby=contact-heading] summary');
+$I->fillField('form[action$="/account/email"] input[type=email]', "walk-moved-{$stamp}@example.test");
+$I->fillField('form[action$="/account/email"] input[type=password]', $newPassword);
 $I->click('Send confirmation link');
 $I->waitForText('Your address stays as it is until you follow it');
+$I->seeInCurrentUrl('/account/security');
 $I->click('Cancel this change');
 $I->waitForText('The pending email change was cancelled');
-$I->seeThePageLooksRight('63-preferences');
+$I->seeThePageLooksRight('63b-security');
 $I->amOnPage('/en/account/notifications');
 $toggle = $I->grabAttributeFrom('input[type=checkbox][name^=notify_]', 'name');
 $I->uncheckOption("input[name={$toggle}]");

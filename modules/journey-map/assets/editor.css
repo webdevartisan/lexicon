@@ -1,0 +1,122 @@
+/* The Places section in the post editor. Classes start with journey-map- so they never meet core styles. */
+
+.journey-map-button {
+  flex-shrink: 0;
+  border: 1px solid currentColor;
+  border-radius: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgb(var(--sc-custom-500, 59 130 246));
+  background: transparent;
+  cursor: pointer;
+}
+
+.journey-map-button:hover,
+.journey-map-button:focus-visible {
+  background: rgb(var(--sc-custom-500, 59 130 246) / 0.08);
+}
+
+.journey-map-button-quiet {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.journey-map-results {
+  margin-top: 0.375rem;
+  border: 1px solid rgb(148 163 184 / 0.5);
+  border-radius: 0.375rem;
+  max-height: 12rem;
+  overflow-y: auto;
+}
+
+.journey-map-results button {
+  display: block;
+  width: 100%;
+  padding: 0.375rem 0.625rem;
+  text-align: start;
+  font-size: 0.8125rem;
+  background: transparent;
+  cursor: pointer;
+}
+
+.journey-map-results li + li {
+  border-top: 1px solid rgb(148 163 184 / 0.3);
+}
+
+.journey-map-results button:hover,
+.journey-map-results button:focus-visible {
+  background: rgb(148 163 184 / 0.15);
+}
+
+.journey-map-editor-map {
+  height: 20rem;
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.journey-map-error {
+  color: #dc2626;
+}
+
+.journey-map-places {
+  border: 1px solid rgb(148 163 184 / 0.5);
+  border-radius: 0.375rem;
+}
+
+.journey-map-place {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.125rem 0.25rem;
+}
+
+.journey-map-place + .journey-map-place {
+  border-top: 1px solid rgb(148 163 184 / 0.3);
+}
+
+.journey-map-place.is-chosen {
+  background: rgb(var(--sc-custom-500, 59 130 246) / 0.08);
+}
+
+.journey-map-place-pick {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0.25rem 0.375rem;
+  text-align: start;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  background: transparent;
+  cursor: pointer;
+}
+
+.journey-map-place.is-chosen .journey-map-place-pick {
+  font-weight: 600;
+}
+
+.journey-map-place-tool {
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1;
+  opacity: 0.7;
+  background: transparent;
+  cursor: pointer;
+}
+
+.journey-map-place-tool:hover,
+.journey-map-place-tool:focus-visible,
+.journey-map-place-pick:hover,
+.journey-map-place-pick:focus-visible {
+  background: rgb(148 163 184 / 0.15);
+  opacity: 1;
+}
+
+.journey-map-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

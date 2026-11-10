@@ -78,7 +78,7 @@ final class BlogInsightsController extends AppController
             ? AnalyticsScope::post($blogIdInt, (int) $this->postInBlog($blog, $postId)['id'])
             : AnalyticsScope::blog($blogIdInt);
         $dimension = (string) ($this->request->get['dimension'] ?? '');
-        $range = AnalyticsRange::fromQuery($this->request->get, blog_timezone($blogIdInt));
+        $range = AnalyticsRange::fromQuery($this->request->get, 'UTC');
         [$columns, $rows] = $this->insightsPage->export($blog, $scope, $dimension, $range);
 
         return $this->csv("insights-{$dimension}-{$range->fromDate()}-{$range->toDate()}.csv", $columns, $rows);
@@ -91,7 +91,7 @@ final class BlogInsightsController extends AppController
     {
         $blogId = (int) $blog->id();
         // No page name: looking at someone's blog must not change where the control panel's Insights link resumes.
-        $range = $this->savedView->range((int) auth()->user()['id'], null, $this->request->get, blog_timezone($blogId));
+        $range = $this->savedView->range((int) auth()->user()['id'], null, $this->request->get, 'UTC');
 
         return $this->insightsPage->frame($blog, $range, true, '/admin/insights/blogs/'.$blogId, false);
     }

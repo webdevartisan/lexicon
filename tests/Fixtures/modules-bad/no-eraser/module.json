@@ -1,0 +1,11 @@
+{
+    "key": "no-eraser",
+    "name": "No eraser",
+    "description": "Declares a table but cannot erase it, so install must refuse it.",
+    "version": 1,
+    "scope": "blog",
+    "class": "Tests\\Fixtures\\Modules\\NoEraser\\NoEraserModule",
+    "slots": [],
+    "tables": ["no_eraser_rows"],
+    "requires": []
+}

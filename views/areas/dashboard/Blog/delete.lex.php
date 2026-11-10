@@ -1,6 +1,6 @@
 {% extends "back.lex.php" %}
 
-{% block title %}Delete Blog - {{ blog.blog_name }}{% endblock %}
+{% block title %}{{ t('blog.delete.pageTitle') }} · {{ blog.blog_name }}{% endblock %}
 
 {% block body %}
 

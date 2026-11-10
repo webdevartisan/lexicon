@@ -5,33 +5,31 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Helpers\TimezoneHelper;
-use App\Models\PendingEmailChangeModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
+use App\Models\UserProfileModel;
 use App\Services\AccountZone;
 use App\Services\LocaleRegistry;
+use App\Services\PublicCacheInvalidator;
 use App\Services\SessionLocaleSync;
 use Exception;
 use Framework\Core\Response;
 
 /**
- * How the interface behaves for one person: language and timezone.
- *
- * The sign-in address is shown here because this is where people look for it,
- * but it is not editable in this form. Changing it is a credential operation
- * with its own password gate and inbox confirmation, owned by
- * AccountEmailController. Public identity lives in AccountProfileController
- * and passwords in AccountSecurityController.
+ * How the account behaves for one person: language, timezone and whether
+ * anyone can open the profile. The sign-in address and passwords belong to
+ * AccountEmailController and AccountSecurityController.
  */
 final class AccountPreferencesController extends AppController
 {
     public function __construct(
         private UserModel $users,
         private UserPreferencesModel $prefs,
-        private PendingEmailChangeModel $pendingEmail,
+        private UserProfileModel $profiles,
         private LocaleRegistry $locales,
         private SessionLocaleSync $localeSync,
         private AccountZone $zones,
+        private PublicCacheInvalidator $cacheInvalidator,
     ) {}
 
     /**
@@ -46,12 +44,11 @@ final class AccountPreferencesController extends AppController
             'timezones' => TimezoneHelper::getGroupedTimezones(),
             'deviceZone' => $this->zones->device(),
             'locales' => $this->localeOptions(),
-            'pendingEmail' => $this->pendingEmail->findForUser($userId) ?: null,
         ]);
     }
 
     /**
-     * Persist interface language and timezone.
+     * Persist interface language, timezone and profile visibility.
      */
     public function update(): Response
     {
@@ -78,6 +75,7 @@ final class AccountPreferencesController extends AppController
             // locale keeps following whatever language the page itself is in.
             'locale' => ($validated['locale'] ?? 'auto') === 'auto' ? null : $validated['locale'],
         ]);
+        $this->saveVisibility($userId);
 
         // Picking a language here has to move the URL too, or the redirect below
         // lands on the locale the visitor was already on and the choice looks
@@ -132,7 +130,27 @@ final class AccountPreferencesController extends AppController
     }
 
     /**
-     * Load the sign-in address and interface preferences.
+     * Save whether anyone can open the profile. An unticked switch is not
+     * posted at all, which means off.
+     */
+    private function saveVisibility(int $userId): void
+    {
+        $changed = changedFields(
+            ['is_public' => $this->request->postParam('is_public') ? 1 : 0],
+            $this->profiles->findOrCreate($userId) ?: []
+        );
+
+        if ($changed === []) {
+            return;
+        }
+
+        $this->profiles->upsert($userId, $changed);
+        // The profile page and author links are cached, so hiding or showing them must clear those copies.
+        $this->cacheInvalidator->purgeAuthorSurfaces((string) auth()->user()['handle']);
+    }
+
+    /**
+     * Load the interface preferences and whether the profile is public.
      *
      * @return array<string, mixed>
      */
@@ -149,6 +167,7 @@ final class AccountPreferencesController extends AppController
 
         $merged['timezone'] = $this->zones->chosen($userId) ?? 'auto';
         $merged['locale'] = $preferences['locale'] ?? 'auto';
+        $merged['is_public'] = !empty(($this->profiles->findOrCreate($userId) ?: [])['is_public']);
 
         return $merged;
     }

@@ -25,7 +25,7 @@ class HomeController extends AppController
     public function index(): Response
     {
         return $this->view([
-            'showcase' => $this->publishedPosts->findHomeShowcase(6),
+            'showcase' => $this->publishedPosts->findPlatformPicks(6),
             'stats' => $this->publicStats(),
             // Only this page opens on the dark cover, so only this page gets
             // the transparent masthead.

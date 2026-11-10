@@ -1034,6 +1034,66 @@
         padding: 1.25rem
     }
 
+    /*
+     * One card holding a row of figures. Each cell draws its own top and start border and the grid is pulled
+     * one pixel over the card's edge, so a wrap on a phone or an odd count keeps clean dividers without extra rules.
+     */
+    .stat-strip {
+        overflow: hidden;
+    }
+
+    .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-top: -1px;
+        margin-inline-start: -1px;
+    }
+
+    @media (min-width: 1024px) {
+        .stat-grid {
+            grid-template-columns: repeat(var(--stat-count, 4), minmax(0, 1fr));
+        }
+    }
+
+    .stat-cell {
+        display: block;
+        padding: .875rem 1.25rem;
+        border-top: 1px solid rgb(226 232 240);
+        border-inline-start: 1px solid rgb(226 232 240);
+        transition: background-color .15s;
+    }
+
+    .stat-cell:hover {
+        background-color: rgb(248 250 252);
+    }
+
+    .stat-cell:focus-visible {
+        outline: 2px solid rgb(var(--sc-custom-500));
+        outline-offset: -2px;
+    }
+
+    :is([data-mode=dark] .stat-cell) {
+        border-color: rgb(var(--sc-zink-600));
+    }
+
+    :is([data-mode=dark] .stat-cell:hover) {
+        background-color: rgb(var(--sc-zink-600) / .45);
+    }
+
+    /* A native details element as a "show more" link: the summary swaps its own label and loses the browser marker. */
+    .more-toggle > summary {
+        list-style: none;
+    }
+
+    .more-toggle > summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .more-toggle[open] .more-closed,
+    .more-toggle:not([open]) .more-open {
+        display: none;
+    }
+
     @media (min-width: 768px) {
         .ltr\:md\:text-end:where([dir=ltr], [dir=ltr] *) {
             text-align: end
@@ -1120,4 +1180,8 @@
     .toast-enter {
         animation: none;
     }
+}
+/* The post editor has no page heading, so its save bar sits where toasts land. They drop below it there. */
+body:has([data-editor]) #toast-stack {
+    top: calc(theme("spacing.header") + 5.5rem);
 }

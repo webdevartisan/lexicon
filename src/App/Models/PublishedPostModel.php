@@ -110,13 +110,16 @@ class PublishedPostModel extends AppModel
         $inClause = implode(',', $placeholders);
         $params[':limit'] = $limit;
 
-        $sql = "SELECT id, blog_id, slug, title, excerpt, LEFT(content, 1000) AS content, featured_image, visibility, published_at
+        // Full content because the post cards show a reading time
+        $sql = "SELECT posts.id, posts.blog_id, posts.slug, posts.title, posts.excerpt, posts.content, posts.featured_image,
+                       posts.visibility, posts.published_at, c.name AS category_name
                 FROM posts
-                WHERE author_id = :author_id
-                AND status = 'published'
+                LEFT JOIN categories c ON c.id = posts.category_id
+                WHERE posts.author_id = :author_id
+                AND posts.status = 'published'
                 AND EXISTS (SELECT 1 FROM blogs pb WHERE pb.id = posts.blog_id AND pb.status = 'published')
-                AND visibility IN ($inClause)
-                ORDER BY published_at DESC
+                AND posts.visibility IN ($inClause)
+                ORDER BY posts.published_at DESC
                 LIMIT :limit";
 
         $stmt = $this->database->query($sql, $params);
@@ -505,16 +508,16 @@ class PublishedPostModel extends AppModel
     }
 
     /**
-     * Admin picks for the site front page showcase, newest first.
+     * Admin picks for the front page showcase and the Discover slider, newest first.
      *
-     * The front page is a platform owned surface, so only posts an
-     * administrator explicitly flagged appear here. Returns an empty array
-     * when nothing is picked; the view falls back to its own static cards.
+     * Both are platform owned surfaces, so only posts an administrator
+     * explicitly flagged appear here. Returns an empty array when nothing is
+     * picked; each view decides its own fallback.
      *
-     * @param  int  $limit  Maximum number of showcase posts
+     * @param  int  $limit  Maximum number of posts
      * @return array<int, array<string, mixed>> Post rows with blog name and slug
      */
-    public function findHomeShowcase(int $limit = 6): array
+    public function findPlatformPicks(int $limit = 6): array
     {
         $sql = "SELECT p.*, b.blog_name, b.blog_slug
                 FROM posts p

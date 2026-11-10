@@ -11,6 +11,7 @@ use App\Models\AnalyticsVisitModel;
 use App\Models\UserModel;
 use App\Services\Analytics\VisitorIdentity;
 use Framework\Database;
+use Framework\Modules\ModuleDuties;
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -38,6 +39,7 @@ class AccountErasureService
         private AnalyticsVisitModel $analyticsVisits,
         private VisitorIdentity $visitorIdentity,
         private string $deletedUserHandle,
+        private ModuleDuties $moduleDuties,
     ) {}
 
     /**
@@ -153,6 +155,7 @@ class AccountErasureService
                 [$userId]
             )->fetchAll(\PDO::FETCH_COLUMN);
 
+            $this->moduleDuties->eraseUser($userId);
             $this->database->execute('DELETE FROM users WHERE id = ?', [$userId]);
 
             $this->recountCommentVotes($votedComments);

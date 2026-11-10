@@ -1,40 +1,50 @@
 /**
- * The per-blog media library page: the card grid with search, filters, paging
- * and uploads, and the Rescan and Shrink actions. Clicking a card opens the
- * image editor from media-editor.js, which gets its helpers handed in here.
- *
- * The page hands over its first batch of items as JSON, so every card is built by
- * cardHtml() whether it came from the first render, paging, an upload or an edit.
+ * The per-blog media library page. `items` holds what is on screen and every change
+ * goes through render(), so the list and grid views always show the same thing.
  */
 (function () {
     var root = document.querySelector('[data-media-library]');
     if (!root) return;
 
-    var base = root.getAttribute('data-media-base');
     var csrfToken = root.querySelector('input[name="_token"]').value;
+    var initial = JSON.parse(root.querySelector('[data-media-initial]').textContent);
+    var text = initial.text || {};
+    var sources = initial.sources || {};
+    var routes = initial.routes;
+    // Tailwind's sm breakpoint, where the phone layout ends
+    var phone = window.matchMedia('(max-width: 639px)');
 
-    /* ---------- Shared helpers ---------- */
+    function t(key, vars) {
+        var phrase = text[key] || key;
+        return phrase.replace(/\{(\w+)\}/g, function (match, name) {
+            return vars && vars[name] !== undefined ? vars[name] : match;
+        });
+    }
 
-    // GET when there are no fields, otherwise a CSRF-protected POST. Resolves with
-    // the payload's data and rejects with a message that can be shown as is.
-    function api(path, fields) {
+    function route(name, id) {
+        return routes[name].replace('{id}', encodeURIComponent(id));
+    }
+
+    function api(url, fields) {
         var options = { credentials: 'same-origin', headers: { Accept: 'application/json' } };
         if (fields) {
             var body = new FormData();
             body.append('_token', csrfToken);
             Object.keys(fields).forEach(function (key) {
-                if (fields[key] !== null && fields[key] !== undefined) body.append(key, fields[key]);
+                var value = fields[key];
+                if (value === null || value === undefined) return;
+                [].concat(value).forEach(function (part) { body.append(key, part); });
             });
             options.method = 'POST';
             options.headers['X-CSRF-TOKEN'] = csrfToken;
             options.body = body;
         }
 
-        return fetch(base + path, options)
+        return fetch(url, options)
             .then(function (response) { return response.json().catch(function () { return null; }); })
             .then(function (payload) {
                 if (!payload || !payload.success) {
-                    throw new Error((payload && payload.error) || 'Something went wrong. Please try again.');
+                    throw new Error((payload && payload.error) || t('error'));
                 }
                 return payload.data;
             });
@@ -66,247 +76,340 @@
         return item.original_name || item.filename || '';
     }
 
-    /* ---------- Grid ---------- */
+    function typeLabel(item) {
+        var ext = String(item.extension || '').toUpperCase();
+        return ext === 'JPEG' ? 'JPG' : ext;
+    }
 
-    var grid = document.getElementById('media-grid');
-    var empty = document.getElementById('media-empty');
-    var totalEl = root.querySelector('[data-media-total]');
-    var loadMoreWrap = document.getElementById('media-load-more-wrap');
-    var filters = { q: '', source: '', sort: 'newest' };
+    var VIEW_KEY = 'lexicon:media-view';
     var pageSize = 24;
-    var total = 0;
+    var items = initial.items || [];
+    var total = initial.total || 0;
+    var totalBytes = initial.totalBytes || 0;
+    var filters = { q: '', source: '', sort: 'date', dir: 'desc' };
+    var view = 'grid';
 
-    function cardHtml(item) {
-        var name = esc(displayName(item));
-        var thumb = esc(versioned(item.url, item.updated_at || item.created_at));
-        return ''
-            + '<figure class="group/media relative border border-slate-200 dark:border-zink-500 rounded-md overflow-hidden bg-slate-50 dark:bg-zink-700" data-media-id="' + esc(item.id) + '">'
-            + '  <button type="button" data-media-open aria-label="Edit ' + name + '" class="block w-full aspect-square overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-custom-500">'
-            + '    <img src="' + thumb + '" alt="" loading="lazy" class="w-full h-full object-cover transition-transform group-hover/media:scale-105">'
-            + '  </button>'
-            + '  <figcaption class="px-2 py-1.5 text-[11px] text-slate-600 dark:text-zink-200 truncate" title="' + name + '">' + name + '</figcaption>'
-            + '  <div class="pointer-events-none absolute inset-x-0 bottom-0 px-2 py-1.5 bg-gradient-to-t from-black/60 to-transparent text-[10px] text-white flex justify-between opacity-0 group-hover/media:opacity-100 transition-opacity">'
-            + '    <span>' + esc(String(item.extension || '').toUpperCase()) + '</span><span>' + esc(humanSize(item.size_bytes)) + '</span>'
-            + '  </div>'
-            + '  <button type="button" data-media-delete aria-label="Delete ' + name + '" title="Delete" class="absolute top-1.5 right-1.5 p-1 rounded-md bg-white/90 text-red-600 hover:bg-red-50 opacity-0 group-hover/media:opacity-100 transition-opacity focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500">'
-            + '    <i data-lucide="trash-2" class="size-3.5"></i>'
-            + '  </button>'
-            + '</figure>';
+    try {
+        if (window.localStorage.getItem(VIEW_KEY) === 'list') view = 'list';
+    } catch (e) {}
+
+    var list = document.getElementById('media-items');
+    var empty = document.getElementById('media-empty');
+    var countEl = root.querySelector('[data-media-count]');
+    var bytesEl = root.querySelector('[data-media-bytes]');
+    var statusEl = root.querySelector('[data-media-status]');
+    var loadMoreWrap = document.getElementById('media-load-more-wrap');
+
+    function thumbUrl(item) {
+        return versioned(item.url, item.updated_at || item.created_at);
     }
 
-    function cardFor(id) {
-        return grid.querySelector('[data-media-id="' + Number(id) + '"]');
-    }
+    var cards = createMediaCards({
+        t: t,
+        esc: esc,
+        humanSize: humanSize,
+        displayName: displayName,
+        typeLabel: typeLabel,
+        thumbUrl: thumbUrl,
+        checkbox: function (item) { return selection.checkboxHtml(item); },
+    });
 
-    function setTotal(count) {
-        total = Math.max(0, count);
-        totalEl.textContent = total + ' item' + (total === 1 ? '' : 's');
-        empty.classList.toggle('hidden', grid.children.length > 0);
-        loadMoreWrap.classList.toggle('hidden', grid.children.length >= total);
-    }
-
-    function render(html, position) {
-        grid.insertAdjacentHTML(position, html);
-        if (window.lucide) window.lucide.createIcons();
-    }
-
-    // Uploads and edits can come back as an item the grid already shows (the same
-    // file uploaded twice, an image overwritten in place), so replace before adding.
-    function showCard(item) {
-        var existing = cardFor(item.id);
-        if (existing) {
-            existing.insertAdjacentHTML('afterend', cardHtml(item));
-            existing.remove();
-            if (window.lucide) window.lucide.createIcons();
-            return;
+    function render() {
+        if (items.length === 0) {
+            list.innerHTML = '';
+        } else {
+            list.innerHTML = view === 'list' ? cards.list(items) : cards.grid(items);
         }
-        render(cardHtml(item), 'afterbegin');
-        setTotal(total + 1);
+        updateMeta();
+        selection.sync();
     }
 
-    function removeCard(id) {
-        var card = cardFor(id);
-        if (!card) return;
-        card.remove();
-        setTotal(total - 1);
+    function updateMeta() {
+        countEl.textContent = total;
+        bytesEl.textContent = t('total', { size: humanSize(totalBytes) });
+
+        var filtered = filters.q !== '' || filters.source !== '';
+        empty.classList.toggle('hidden', items.length > 0);
+        empty.querySelector('[data-empty-title]').textContent = t(filtered ? 'noMatchTitle' : 'emptyTitle');
+        empty.querySelector('[data-empty-body]').textContent = t(filtered ? 'noMatchBody' : 'emptyBody');
+        loadMoreWrap.classList.toggle('hidden', items.length >= total);
+    }
+
+    function setView(next) {
+        view = next;
+        try { window.localStorage.setItem(VIEW_KEY, view); } catch (e) {}
+        list.setAttribute('data-view', view);
+        viewButtons.forEach(function (button) {
+            button.setAttribute('aria-pressed', button.getAttribute('data-media-view') === view ? 'true' : 'false');
+        });
+        render();
+    }
+
+    // Work in progress stays on the page's own line, results go to a toast
+    function showStatus(message, kind) {
+        statusEl.textContent = message;
+        statusEl.classList.toggle('hidden', kind !== 'busy');
+        if (kind !== 'busy') cpToast(message, kind === 'error' ? 'error' : 'success');
+    }
+
+    function indexOf(id) {
+        for (var i = 0; i < items.length; i++) {
+            if (String(items[i].id) === String(id)) return i;
+        }
+        return -1;
+    }
+
+    function showCard(item) {
+        var at = indexOf(item.id);
+        if (at === -1) {
+            items.unshift(item);
+            total += 1;
+            totalBytes += item.size_bytes || 0;
+        } else {
+            totalBytes += (item.size_bytes || 0) - (items[at].size_bytes || 0);
+            items[at] = item;
+        }
+        render();
+    }
+
+    function removeItems(ids) {
+        ids.forEach(function (id) {
+            var at = indexOf(id);
+            if (at === -1) return;
+            totalBytes -= items[at].size_bytes || 0;
+            total = Math.max(0, total - 1);
+            items.splice(at, 1);
+        });
+        render();
     }
 
     function deleteItem(id) {
-        return api('/' + id + '/destroy', {}).then(function () { removeCard(id); });
+        return api(route('destroy', id), {}).then(function () {
+            removeItems([id]);
+            showStatus(t('deleted'), 'ok');
+        });
     }
 
     // The server empties banner, logo and featured or social image slots on delete,
     // but an image inside a post's text stays there and breaks, so say which is which.
     function confirmDelete(usages) {
-        if (usages.length === 0) return cpConfirm('Delete this image? This cannot be undone.');
+        if (usages.length === 0) return cpConfirm(t('deleteConfirm'), { tone: 'danger' });
 
-        var list = usages.map(function (use) { return '• ' + use.label + ' (' + use.context + ')'; }).join('\n');
+        var places = usages.map(function (use) { return '• ' + use.label + ' (' + use.context + ')'; }).join('\n');
         var inBody = usages.some(function (use) { return use.in_body; });
-        var message = 'This image is used in ' + usages.length + ' place(s):\n\n' + list
-            + '\n\nDeleting it leaves those spots without an image.'
-            + (inBody ? ' Where it sits inside a post\'s text, it will show as a broken image.' : '')
-            + '\n\nDelete anyway?';
+        var message = t('deleteUsed') + '\n\n' + places + '\n\n' + t('deleteLeaves')
+            + (inBody ? ' ' + t('deleteInBody') : '') + '\n\n' + t('deleteAnyway');
 
-        return cpConfirm(message);
+        return cpConfirm(message, { tone: 'danger' });
     }
 
-    // The next page starts after the cards on screen, which stays right after
-    // uploads and deletes shift the list.
+    function askToDelete(id) {
+        api(route('details', id))
+            .then(function (details) { return confirmDelete(details.usages || []); })
+            .then(function (ok) { if (ok) return deleteItem(id); })
+            .catch(function (error) { showStatus(error.message, 'error'); });
+    }
+
+    function copyLink(item, button) {
+        var url = new URL(item.url, window.location.origin).href;
+        navigator.clipboard.writeText(url)
+            .then(function () {
+                showStatus(t('copied'), 'ok');
+                if (!button) return;
+                button.innerHTML = cards.icon('check');
+                setTimeout(function () { button.innerHTML = cards.icon('copy'); }, 1500);
+            })
+            .catch(function () { showStatus(t('copyFailed'), 'error'); });
+    }
+
     function loadItems(replace) {
         var params = new URLSearchParams({
             q: filters.q,
             source: filters.source,
             sort: filters.sort,
+            dir: filters.dir,
             limit: pageSize,
-            offset: replace ? 0 : grid.children.length,
+            offset: replace ? 0 : items.length,
         });
 
-        return api('/list?' + params.toString()).then(function (data) {
-            if (replace) grid.innerHTML = '';
-            render((data.items || []).map(cardHtml).join(''), 'beforeend');
-            setTotal(data.total || 0);
+        return api(route('list') + '?' + params.toString()).then(function (data) {
+            items = (replace ? [] : items).concat(data.items || []);
+            total = data.total || 0;
+            totalBytes = data.total_bytes || 0;
+            if (replace) selection.clear();
+            render();
         });
     }
 
     function reloadItems() {
-        loadItems(true).catch(function (error) { window.alert(error.message); });
+        loadItems(true).catch(function (error) { showStatus(error.message, 'error'); });
     }
-
-    var initial = JSON.parse(root.querySelector('[data-media-initial]').textContent);
-    render(initial.items.map(cardHtml).join(''), 'beforeend');
-    setTotal(initial.total);
 
     var searchInput = document.getElementById('media-q');
     var searchTimer;
     searchInput.addEventListener('input', function () {
         clearTimeout(searchTimer);
-        searchTimer = setTimeout(function () { filters.q = searchInput.value; reloadItems(); }, 250);
+        searchTimer = setTimeout(function () { filters.q = searchInput.value.trim(); reloadItems(); }, 250);
     });
-    document.getElementById('media-source').addEventListener('change', function (e) { filters.source = e.target.value; reloadItems(); });
-    document.getElementById('media-sort').addEventListener('change', function (e) { filters.sort = e.target.value; reloadItems(); });
+    document.getElementById('media-source').addEventListener('change', function (e) {
+        filters.source = e.target.value;
+        reloadItems();
+    });
+    document.getElementById('media-sort').addEventListener('change', function (e) {
+        filters.sort = e.target.value;
+        reloadItems();
+    });
+
+    var dirButton = document.getElementById('media-sort-dir');
+    dirButton.addEventListener('click', function () {
+        filters.dir = filters.dir === 'desc' ? 'asc' : 'desc';
+        dirButton.querySelector('[data-dir-icon="desc"]').classList.toggle('hidden', filters.dir !== 'desc');
+        dirButton.querySelector('[data-dir-icon="asc"]').classList.toggle('hidden', filters.dir !== 'asc');
+        var next = t(filters.dir === 'desc' ? 'sortAsc' : 'sortDesc');
+        dirButton.setAttribute('aria-label', next);
+        dirButton.setAttribute('title', next);
+        reloadItems();
+    });
+
+    var viewButtons = root.querySelectorAll('[data-media-view]');
+    viewButtons.forEach(function (button) {
+        button.addEventListener('click', function () { setView(button.getAttribute('data-media-view')); });
+    });
+
+    var filterControls = root.querySelector('[data-media-filters]');
+    var filterHome = filterControls.parentNode;
+    var filterSheet = document.getElementById('media-filters-sheet');
+    root.querySelector('[data-media-filters-open]').addEventListener('click', function (e) {
+        filterSheet.querySelector('[data-media-filters-slot]').appendChild(filterControls);
+        cpModal.open('media-filters-sheet', e.currentTarget);
+    });
+    filterSheet.addEventListener('modal:close', function () { filterHome.appendChild(filterControls); });
+
     document.getElementById('media-load-more').addEventListener('click', function () {
-        loadItems(false).catch(function (error) { window.alert(error.message); });
+        loadItems(false).catch(function (error) { showStatus(error.message, 'error'); });
     });
 
-    grid.addEventListener('click', function (e) {
-        var card = e.target.closest('[data-media-id]');
-        if (!card) return;
-        var id = card.getAttribute('data-media-id');
+    // Clicks inside a checkbox label tick it natively, so they are left alone here
+    list.addEventListener('click', function (e) {
+        var row = e.target.closest('[data-media-id]');
+        if (!row || e.target.closest('label')) return;
+        var id = row.getAttribute('data-media-id');
+        var item = items[indexOf(id)];
+        if (!item) return;
 
-        if (e.target.closest('[data-media-delete]')) {
-            api('/' + id + '/details')
-                .then(function (item) { return confirmDelete(item.usages || []); })
-                .then(function (ok) { if (ok) return deleteItem(id); })
-                .catch(function (error) { window.alert(error.message); });
+        if (selection.selecting()) {
+            selection.toggle(id);
+        } else if (phone.matches) {
+            sheet.open(item, row.querySelector('[data-media-more]'));
+        } else if (e.target.closest('[data-media-delete]')) {
+            askToDelete(id);
+        } else if (e.target.closest('[data-media-copy]')) {
+            copyLink(item, e.target.closest('[data-media-copy]'));
         } else if (e.target.closest('[data-media-open]')) {
-            editor.open(id, e.target.closest('[data-media-open]'));
+            editor.open(id, row.querySelector('[data-media-open]:not([aria-hidden])'));
         }
     });
 
-    /* ---------- Upload ---------- */
+    var dropArea = document.getElementById('media-drop');
+    var fileInput = document.getElementById('media-file-input');
 
-    var uploadToggle = document.getElementById('media-upload-toggle');
-    var uploadPanel = document.getElementById('media-upload-panel');
-    var dropArea = document.getElementById('media-uploader');
-    var fileInput = document.getElementById('media-uploader-input');
-    var feedback = document.getElementById('media-upload-feedback');
-
-    function uploadFeedback(message, ok) {
-        var line = document.createElement('div');
-        line.className = ok ? 'text-emerald-600' : 'text-red-600';
-        line.textContent = message;
-        feedback.appendChild(line);
-        setTimeout(function () { line.remove(); }, 4000);
-    }
-
-    function upload(files) {
-        Array.prototype.forEach.call(files, function (file) {
-            api('', { file: file })
-                .then(function (item) {
-                    showCard(item);
-                    uploadFeedback(file.name + ' uploaded', true);
-                })
-                .catch(function (error) { uploadFeedback(file.name + ': ' + error.message, false); });
-        });
-    }
-
-    uploadToggle.addEventListener('click', function () {
-        var open = uploadPanel.classList.toggle('hidden') === false;
-        uploadToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    var queue = createMediaUploadQueue({
+        container: document.getElementById('media-upload-feedback'),
+        url: route('upload'),
+        csrfToken: csrfToken,
+        extensions: root.getAttribute('data-media-types').split(',').map(function (ext) { return ext.replace('.', ''); }),
+        maxBytes: parseInt(root.getAttribute('data-media-max-bytes'), 10),
+        typeNames: root.getAttribute('data-media-type-names'),
+        sizeLabel: root.getAttribute('data-media-max-label'),
+        t: t,
+        esc: esc,
+        onUploaded: showCard,
     });
-    dropArea.addEventListener('click', function () { fileInput.click(); });
+
+    root.querySelector('[data-media-upload]').addEventListener('click', function () { fileInput.click(); });
     fileInput.addEventListener('change', function () {
-        upload(fileInput.files);
+        queue.add(fileInput.files);
         fileInput.value = '';
+        if (phone.matches) root.scrollIntoView({ block: 'start' });
     });
     ['dragenter', 'dragover'].forEach(function (type) {
         dropArea.addEventListener(type, function (e) {
             e.preventDefault();
-            dropArea.classList.add('border-custom-500');
+            dropArea.setAttribute('data-dragging', '');
         });
     });
-    ['dragleave', 'drop'].forEach(function (type) {
-        dropArea.addEventListener(type, function (e) {
-            e.preventDefault();
-            dropArea.classList.remove('border-custom-500');
-        });
+    dropArea.addEventListener('dragleave', function (e) {
+        if (dropArea.contains(e.relatedTarget)) return;
+        dropArea.removeAttribute('data-dragging');
     });
     dropArea.addEventListener('drop', function (e) {
-        if (e.dataTransfer && e.dataTransfer.files) upload(e.dataTransfer.files);
+        e.preventDefault();
+        dropArea.removeAttribute('data-dragging');
+        if (e.dataTransfer && e.dataTransfer.files) queue.add(e.dataTransfer.files);
     });
 
-    /* ---------- Library-wide actions ---------- */
+    var busy = false;
+    function runAction(workingLabel, request) {
+        if (busy) return;
+        busy = true;
+        showStatus(workingLabel + '…', 'busy');
 
-    // Shows the working label while the request runs and puts the button back after
-    function runAction(button, workingLabel, request) {
-        var label = button.querySelector('span');
-        var idle = label.textContent;
-        label.textContent = workingLabel;
-        button.disabled = true;
-
-        return request()
-            .catch(function (error) { window.alert(error.message); })
-            .finally(function () {
-                label.textContent = idle;
-                button.disabled = false;
-            });
+        request()
+            .catch(function (error) { showStatus(error.message, 'error'); })
+            .finally(function () { busy = false; });
     }
 
-    var rescanButton = document.getElementById('media-rescan');
-    rescanButton.addEventListener('click', function () {
-        runAction(rescanButton, 'Rescanning…', function () {
-            return api('/rescan', {}).then(function (data) {
-                if (data.added === 0) {
-                    window.alert('Everything on disk is already in the library.');
-                    return;
-                }
-                window.alert('Found and indexed ' + data.added + ' new image(s).');
-                reloadItems();
-            });
-        });
-    });
-
-    var optimizeButton = document.getElementById('media-optimize');
-    optimizeButton.addEventListener('click', function () {
-        cpConfirm('Shrink every image larger than 2048px and re-save it in place? Links to these images keep working. This cannot be undone.').then(function (ok) {
-            if (!ok) return;
-            runAction(optimizeButton, 'Optimizing…', function () {
-                return api('/optimize', {}).then(function (data) {
-                    if (!data.processed) {
-                        window.alert('Nothing to shrink. Every image is already within size.');
+    document.addEventListener('click', function (e) {
+        if (e.target.closest('[data-media-rescan]')) {
+            runAction(t('rescanning'), function () {
+                return api(route('rescan'), {}).then(function (data) {
+                    if (data.added === 0) {
+                        showStatus(t('rescanNone'), 'ok');
                         return;
                     }
-                    window.alert('Shrank ' + data.processed + ' image(s) and saved ' + humanSize(data.bytes_saved) + '.');
+                    showStatus(t('rescanDone', { count: data.added }), 'ok');
                     reloadItems();
                 });
             });
-        });
+        } else if (e.target.closest('[data-media-optimize]')) {
+            cpConfirm(t('optimizeConfirm'), { tone: 'warning' }).then(function (ok) {
+                if (!ok) return;
+                runAction(t('optimizing'), function () {
+                    return api(route('optimize'), {}).then(function (data) {
+                        if (!data.processed) {
+                            showStatus(t('optimizeNone'), 'ok');
+                            return;
+                        }
+                        showStatus(t('optimizeDone', { count: data.processed, size: humanSize(data.bytes_saved) }), 'ok');
+                        reloadItems();
+                    });
+                });
+            });
+        }
     });
 
-    /* ---------- Editor ---------- */
+    var selection = createMediaSelection({
+        root: root,
+        list: list,
+        phone: phone,
+        api: api,
+        route: route,
+        t: t,
+        esc: esc,
+        humanSize: humanSize,
+        displayName: displayName,
+        items: function () { return items; },
+        maxItems: parseInt(root.getAttribute('data-media-bulk-max'), 10),
+        notify: showStatus,
+        onDeleted: removeItems,
+    });
 
     var editor = createMediaEditor({
         api: api,
+        route: route,
+        t: t,
+        sources: sources,
+        notify: showStatus,
         esc: esc,
         humanSize: humanSize,
         versioned: versioned,
@@ -316,7 +419,18 @@
         confirmDelete: confirmDelete,
     });
 
-    // Arriving from an "Edit" link elsewhere (the appearance page) opens straight onto that image
+    var sheet = createMediaItemSheet({
+        id: 'media-item-sheet',
+        thumb: thumbUrl,
+        displayName: displayName,
+        meta: function (item) { return typeLabel(item) + ' · ' + humanSize(item.size_bytes); },
+        onEdit: function (item, trigger) { editor.open(item.id, trigger); },
+        onCopy: function (item) { copyLink(item); },
+        onDelete: function (item) { askToDelete(item.id); },
+    });
+
+    setView(view);
+
     var autoEditId = parseInt(root.getAttribute('data-media-auto-edit'), 10) || 0;
     if (autoEditId > 0) editor.open(autoEditId);
 })();

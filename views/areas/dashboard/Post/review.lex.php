@@ -1,6 +1,6 @@
 {% extends "back.lex.php" %}
 
-{% block title %}Review Post · {{ post.title }}{% endblock %}
+{% block title %}{{ t('breadcrumbs.reviewPost') }} · {{ post.title }}{% endblock %}
 {% block subtitle %}{% endblock %}
 {% block head %}
 <link rel="stylesheet" href="/cp-assets/css/vendors/modal.css">

@@ -47,7 +47,7 @@ final class BlogInsightsPage
      */
     public function frame(BlogResource $blog, AnalyticsRange $range, bool $canAll, string $basePath, bool $canConfigure): array
     {
-        $zone = new \DateTimeZone(blog_timezone((int) $blog->id()));
+        $zone = new \DateTimeZone('UTC');
 
         return [
             'blog' => $blog->toArray(),

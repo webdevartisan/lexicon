@@ -1,42 +1,116 @@
 {% extends "back.lex.php" %}
 {% block title %}{{ t('dashboard.blogs.title') }}{% endblock %}
 {% block subtitle %}<span class="hidden sm:inline">{{ t('dashboard.blogs.subtitle') }}</span>{% endblock %}
+{% block actions %}
+<?php if (!empty($can_create_blog)) {
+    $createLabel = $t('dashboard.blogs.create');
+    $createAttrs = ['data-panel' => 'open'];
+    ?>
+{% cmp="btn" href="/start" variant="blue" icon="plus" label="{$createLabel}" attrs="{$createAttrs}" %}
+<?php } ?>
+{% endblock %}
 {% block body %}
 <?php
+$makeQuery = static function (array $overrides = []) use (
+    $q, $status, $role, $sortExplicit, $tableSort, $listView
+): string {
+    $params = [
+        'q' => $q,
+        'status' => array_key_exists('status', $overrides) ? $overrides['status'] : $status,
+        'role' => array_key_exists('role', $overrides) ? $overrides['role'] : $role,
+        'sort' => $sortExplicit ? $tableSort->key() : '',
+        'dir' => $sortExplicit ? $tableSort->direction() : '',
+        'view' => array_key_exists('view', $overrides) ? $overrides['view'] : $listView,
+    ];
+    $params = array_filter($params, static function ($value): bool {
+        return $value !== '' && $value !== null;
+    });
+
+    return $params ? '?'.http_build_query($params) : '';
+};
+
+$listBase = lurl('/dashboard/blog');
 $sortOptions = [
     'updated' => $t('dashboard.blogs.sort.updated'),
     'created' => $t('dashboard.blogs.sort.created'),
     'posts' => $t('dashboard.blogs.sort.posts'),
     'name' => $t('dashboard.blogs.sort.name'),
 ];
+if ($sortChoice === '') {
+    // Sorted by a column header: the menu has no matching name, so say so instead of showing a wrong one.
+    $sortOptions = ['' => $t('dashboard.blogs.sort.label')] + $sortOptions;
+}
+
 $statusOptions = [
-    '' => $t('dashboard.blogs.anyStatus'),
-    'published' => $t('dashboard.blogStatus.published'),
-    'draft' => $t('dashboard.blogStatus.draft'),
-    'archived' => $t('dashboard.blogStatus.archived'),
+    '' => $t('dashboard.blogs.filters.all').' ('.(int) $counts['all'].')',
+    'published' => $t('dashboard.blogStatus.published').' ('.(int) $counts['published'].')',
+    'draft' => $t('dashboard.blogStatus.draft').' ('.(int) $counts['draft'].')',
+    'archived' => $t('dashboard.blogStatus.archived').' ('.(int) $counts['archived'].')',
 ];
-$searchPlaceholder = $t('dashboard.blogs.search');
-$createLabel = $t('dashboard.blogs.create');
-$createAttrs = ['data-panel' => 'open'];
-$iconButton = 'p-2 text-slate-500 hover:text-custom-500 rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500';
+$roleOptions = [
+    '' => $t('dashboard.blogs.filters.all'),
+    'owned' => $t('dashboard.blogs.groups.owned'),
+    'shared' => $t('dashboard.blogs.groups.shared'),
+];
+
+$filters = [
+    [
+        'label' => $t('dashboard.blogs.filters.status'),
+        'name' => 'status',
+        'options' => $statusOptions,
+        'selected' => $status,
+    ],
+];
+if ($hasShared) {
+    $filters[] = [
+        'label' => $t('dashboard.blogs.filters.role'),
+        'name' => 'role',
+        'options' => $roleOptions,
+        'selected' => $role,
+    ];
+}
+$viewChoices = [
+    'cards' => ['icon' => 'layout-grid', 'label' => $t('dashboard.blogs.view.cards')],
+    'list' => ['icon' => 'list', 'label' => $t('dashboard.blogs.view.compact')],
+];
+foreach ($viewChoices as $viewKey => $choice) {
+    $viewChoices[$viewKey]['href'] = lurl('/dashboard/blog'.$makeQuery(['view' => $viewKey]));
+}
+$keepSort = null;
+if ($sortChoice === '' && $sortExplicit) {
+    $keepSort = ['sort' => $tableSort->key(), 'dir' => $tableSort->direction()];
+}
+$toolbar = [
+    'action' => $listBase,
+    'q' => $q,
+    'searchPlaceholder' => $t('dashboard.blogs.search'),
+    'filters' => $filters,
+    'filtersLabel' => $t('dashboard.blogs.filters.title'),
+    'applyLabel' => $t('dashboard.blogs.filters.apply'),
+    'clearLabel' => $t('dashboard.blogs.clearFilters'),
+    'clearHref' => lurl('/dashboard/blog'.$makeQuery(['status' => '', 'role' => ''])),
+    'view' => ['current' => $listView, 'label' => $t('dashboard.blogs.view.label'), 'choices' => $viewChoices],
+    'sort' => [
+        'options' => $sortOptions,
+        'selected' => $sortChoice,
+        'keep' => $keepSort,
+    ],
+];
+$colName = $t('dashboard.blogs.col.name');
+$colRole = $t('dashboard.blogs.col.role');
+$colStatus = $t('dashboard.blogs.col.status');
+$colPosts = $t('dashboard.blogs.col.posts');
+$colTeam = $t('dashboard.blogs.col.team');
+$colUpdated = $t('dashboard.blogs.col.updated');
+$colActions = $t('dashboard.blogs.col.actions');
+$itemSingular = $t('dashboard.blogs.item.one');
+$itemPlural = $t('dashboard.blogs.item.other');
 ?>
 <div class="container-fluid group-data-[contentboxed]:max-w-boxed mx-auto">
 
-    <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between mb-5">
-        <form method="GET" action="<?= e(lurl('/dashboard/blog')) ?>" class="grid grid-cols-1 sm:grid-cols-3 gap-3 grow max-w-2xl">
-            {% cmp="input" type="text" icon="search" name="q" value="{$q}" placeholder="{$searchPlaceholder}" %}
-            {% cmp="select" name="status" options="{$statusOptions}" selectedKey="{$status}" onchange="this.form.submit()" %}
-            {% cmp="select" name="sort" options="{$sortOptions}" selectedKey="{$sort}" onchange="this.form.submit()" %}
-        </form>
+    {% cmp="list-toolbar" toolbar="{$toolbar}" %}
 
-        <?php if (!empty($can_create_blog)) { ?>
-        <div class="shrink-0">
-            {% cmp="btn" href="/start" variant="blue" icon="plus" label="{$createLabel}" attrs="{$createAttrs}" %}
-        </div>
-        <?php } ?>
-    </div>
-
-    <?php if ($groups['owned'] === [] && $groups['shared'] === []) { ?>
+    {% if blogs|empty %}
     <div class="card">
         <div class="card-body text-center py-16">
             {% cache 'lucide:blogs:search-x' ttl=31536000 %}<i data-lucide="search-x" class="size-12 text-slate-400 mx-auto mb-3"></i>{% endcache %}
@@ -48,42 +122,68 @@ $iconButton = 'p-2 text-slate-500 hover:text-custom-500 rounded-md hover:bg-slat
             </a>
         </div>
     </div>
-    <?php } else { ?>
+    {% else %}
 
-    <?php foreach (['owned', 'shared'] as $group) {
-        $cards = $groups[$group];
-        if ($group === 'shared' && !$hasShared) {
-            continue;
-        } ?>
-    <section class="mb-8" aria-labelledby="blogs-<?= $group ?>">
-        <h2 id="blogs-<?= $group ?>" class="flex items-center gap-2 mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-zink-300">
-            <?= e($t('dashboard.blogs.groups.'.$group)) ?>
-            <span class="text-xs font-medium normal-case tracking-normal text-slate-400 dark:text-zink-400">(<?= count($cards) ?>)</span>
-        </h2>
-
-        <?php if ($cards === []) { ?>
+        <?php if ($listView === 'list') { ?>
         <div class="card">
-            <div class="card-body text-center py-10">
-                <?php if ($group === 'owned' && !$hasOwned) { ?>
-                {% cache 'lucide:blogs:book-open' ttl=31536000 %}<i data-lucide="book-open" class="size-10 text-slate-400 mx-auto mb-2"></i>{% endcache %}
-                <p class="text-sm text-slate-500 dark:text-zink-300 mb-4">{{ t('dashboard.blogs.empty.noOwned') }}</p>
-                <?php if (!empty($can_create_blog)) { ?>
-                {% cmp="btn" href="/start" variant="blue" icon="plus" label="{$createLabel}" attrs="{$createAttrs}" %}
-                <?php } ?>
-                <?php } else { ?>
-                <p class="text-sm text-slate-500 dark:text-zink-300"><?= e($t('dashboard.blogs.empty.groupFiltered')) ?></p>
-                <?php } ?>
+            <div class="card-body relative p-0 overflow-x-auto">
+                <table class="w-full whitespace-nowrap">
+                    <thead class="text-left bg-slate-100 dark:bg-zink-600">
+                        <tr class="text-xs uppercase tracking-wide text-slate-500 dark:text-zink-200">
+                            {% cmp="sortable-th" sort="{$tableSort}" base="{$listBase}" sortKey="name" label="{$colName}" %}
+                            {% cmp="sortable-th" sort="{$tableSort}" base="{$listBase}" sortKey="role" label="{$colRole}" %}
+                            {% cmp="sortable-th" sort="{$tableSort}" base="{$listBase}" sortKey="status" label="{$colStatus}" %}
+                            {% cmp="sortable-th" sort="{$tableSort}" base="{$listBase}" sortKey="posts" label="{$colPosts}" %}
+                            {% cmp="sortable-th" sort="{$tableSort}" base="{$listBase}" sortKey="team" label="{$colTeam}" %}
+                            {% cmp="sortable-th" sort="{$tableSort}" base="{$listBase}" sortKey="updated" label="{$colUpdated}" %}
+                            <th class="px-3.5 py-2.5 font-semibold text-right"><?= e($colActions) ?></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-zink-600 text-sm">
+                        {% foreach ($blogs as $blog): %}
+                        <?php
+                        $blogName = (string) $blog['blog_name'];
+                        $blogStatus = (string) $blog['status'];
+                        $blogStatusLabel = $t('dashboard.blogStatus.'.$blogStatus);
+                        ?>
+                        <tr class="transition-colors hover:bg-slate-50/60 dark:hover:bg-zink-700/40">
+                            <td class="px-3.5 py-2.5 font-medium text-slate-900 dark:text-zink-50">
+                                <div class="flex items-center gap-2 max-w-[18rem]">
+                                    <span class="truncate" dir="auto"><?= e($blogName) ?></span>
+                                    <?php if ($blog['is_active']) { ?>
+                                    <span class="shrink-0 inline-flex items-center px-2 py-0.5 text-[10px] font-semibold rounded-full bg-custom-500 text-white"><?= e($t('dashboard.blogs.active')) ?></span>
+                                    <?php } ?>
+                                </div>
+                                <p class="mt-0.5 text-xs font-normal text-slate-500 dark:text-zink-300 truncate" dir="ltr">/blog/<?= e($blog['blog_slug']) ?></p>
+                            </td>
+                            <td class="px-3.5 py-2.5">
+                                <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-900/40 dark:text-violet-300 dark:border-violet-800"><?= e($blog['role_label']) ?></span>
+                            </td>
+                            <td class="px-3.5 py-2.5">
+                                {% cmp="status-badge" status="{$blogStatus}" label="{$blogStatusLabel}" %}
+                            </td>
+                            <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= (int) $blog['post_count'] ?></td>
+                            <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= (int) $blog['author_count'] ?></td>
+                            <td class="px-3.5 py-2.5 text-slate-500 dark:text-zink-300"><?= e(local_datetime($blog['updated_at'] ?? $blog['created_at'] ?? null, 'M j, Y')) ?></td>
+                            <td class="px-3.5 py-2.5">
+                                <div class="flex items-center justify-end gap-3">
+                                    {% cmp="blog-actions" blog="{$blog}" %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endforeach; %}
+                    </tbody>
+                </table>
             </div>
         </div>
         <?php } else { ?>
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            <?php foreach ($cards as $blog) {
-                $bid = (int) $blog['id'];
-                $blogName = (string) $blog['blog_name'];
-                $bStatus = (string) $blog['status'];
-                $statusLabel = $t('dashboard.blogStatus.'.$bStatus);
-                $live = lurl('/blog/'.$blog['blog_slug']);
-                ?>
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            {% foreach ($blogs as $blog): %}
+            <?php
+            $blogName = (string) $blog['blog_name'];
+            $blogStatus = (string) $blog['status'];
+            $blogStatusLabel = $t('dashboard.blogStatus.'.$blogStatus);
+            ?>
             <article class="card flex flex-col h-full <?= $blog['is_active'] ? 'ring-1 ring-custom-500 border-custom-500' : '' ?>">
                 <div class="relative overflow-hidden rounded-t-md aspect-[21/8] bg-slate-100 dark:bg-zink-600">
                     <?php if ($blog['banner_path'] !== '') { ?>
@@ -101,7 +201,7 @@ $iconButton = 'p-2 text-slate-500 hover:text-custom-500 rounded-md hover:bg-slat
                     <?php } ?>
                     <span class="absolute top-2 ltr:right-2 rtl:left-2 inline-flex items-center gap-1.5">
                         <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-900/40 dark:text-violet-300 dark:border-violet-800"><?= e($blog['role_label']) ?></span>
-                        {% cmp="status-badge" status="{$bStatus}" label="{$statusLabel}" %}
+                        {% cmp="status-badge" status="{$blogStatus}" label="{$blogStatusLabel}" %}
                     </span>
                 </div>
 
@@ -118,48 +218,18 @@ $iconButton = 'p-2 text-slate-500 hover:text-custom-500 rounded-md hover:bg-slat
                     </div>
 
                     <div class="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-slate-100 dark:border-zink-600">
-                        <form method="POST" action="/dashboard/active-blog" class="m-0">
-                            {{ csrf_field() }}
-                            <input type="hidden" name="blog" value="<?= $bid ?>">
-                            <input type="hidden" name="return_to" value="/dashboard">
-                            <button type="submit" class="inline-flex items-center gap-1.5 text-sm font-medium text-custom-500 hover:text-custom-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500 rounded">
-                                {% cache 'lucide:blogs:arrow-right' ttl=31536000 %}<i data-lucide="arrow-right" class="size-4 rtl:rotate-180" aria-hidden="true"></i>{% endcache %}
-                                <?= e($t('dashboard.blogs.open')) ?><span class="sr-only"> <?= e($blogName) ?></span>
-                            </button>
-                        </form>
-                        <div class="flex items-center gap-0.5">
-                            <?php if ($blog['can_settings']) { ?>
-                            <a href="<?= e(lurl('/dashboard/blog/'.($bid).'/settings')) ?>" class="<?= $iconButton ?>" title="<?= e($t('dashboard.blogs.settings')) ?>" aria-label="<?= e($t('dashboard.blogs.settings').': '.$blogName) ?>">
-                                {% cache 'lucide:blogs:sliders' ttl=31536000 %}<i data-lucide="sliders" class="size-4" aria-hidden="true"></i>{% endcache %}
-                            </a>
-                            <?php } ?>
-                            <?php if ($blog['can_team']) { ?>
-                            <a href="<?= e(lurl('/dashboard/blog/'.($bid).'/team')) ?>" class="<?= $iconButton ?>" title="<?= e($t('dashboard.blogs.team')) ?>" aria-label="<?= e($t('dashboard.blogs.team').': '.$blogName) ?>">
-                                {% cache 'lucide:blogs:users' ttl=31536000 %}<i data-lucide="users" class="size-4" aria-hidden="true"></i>{% endcache %}
-                            </a>
-                            <?php } ?>
-                            <a href="<?= e($live) ?>" target="_blank" rel="noopener" class="<?= $iconButton ?>" title="<?= e($t('dashboard.actions.viewLive')) ?>" aria-label="<?= e($t('dashboard.actions.viewLive').': '.$blogName) ?>">
-                                {% cache 'lucide:blogs:external-link' ttl=31536000 %}<i data-lucide="external-link" class="size-4" aria-hidden="true"></i>{% endcache %}
-                            </a>
-                            <?php if (!$blog['is_owner']) { ?>
-                            <form method="POST" action="/dashboard/blog/<?= $bid ?>/team/leave" class="m-0"
-                                  data-confirm="<?= e($t('dashboard.blogs.leaveConfirm', ['name' => $blogName])) ?>">
-                                {{ csrf_field() }}
-                                <button type="submit" class="p-2 text-slate-500 hover:text-red-500 rounded-md hover:bg-slate-100 dark:hover:bg-zink-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-500" title="<?= e($t('dashboard.blogs.leave')) ?>" aria-label="<?= e($t('dashboard.blogs.leave').': '.$blogName) ?>">
-                                    {% cache 'lucide:blogs:log-out' ttl=31536000 %}<i data-lucide="log-out" class="size-4 rtl:rotate-180" aria-hidden="true"></i>{% endcache %}
-                                </button>
-                            </form>
-                            <?php } ?>
-                        </div>
+                        {% cmp="blog-actions" blog="{$blog}" %}
                     </div>
                 </div>
             </article>
-            <?php } ?>
+            {% endforeach %}
         </div>
         <?php } ?>
-    </section>
-    <?php } ?>
 
-    <?php } ?>
+        <div class="mt-6">
+            {% cmp="paginator" pagination="{$pagination}" pageParam="page" basePath="/dashboard/blog" itemSingular="{$itemSingular}" itemPlural="{$itemPlural}" %}
+        </div>
+    {% endif %}
+
 </div>
 {% endblock %}

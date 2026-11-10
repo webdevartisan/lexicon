@@ -37,7 +37,7 @@ class PopularPosts
         return fragment()->rememberData(
             "analytics:popular:{$blogId}",
             function () use ($blogId): array {
-                $today = new \DateTimeImmutable('today', new \DateTimeZone(blog_timezone($blogId)));
+                $today = new \DateTimeImmutable('today', new \DateTimeZone('UTC'));
 
                 return $this->stats->popularPosts(
                     $blogId,

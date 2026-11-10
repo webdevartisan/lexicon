@@ -12,6 +12,7 @@
  *     href    link target, for actions that open a page
  *     newTab  open the href in a new tab, announced to screen readers
  *     post    form action, for actions that change something (sent with CSRF)
+ *     fields  name => value pairs sent with a post action as hidden inputs
  *     confirm question asked before a post action is sent
  *     data    data attributes for a plain button that a page script handles, such as opening a dialog
  *     danger  destructive styling, grouped after a divider at the end
@@ -43,8 +44,14 @@ $renderItem = static function (array $item, string $class) use ($newTabNote): st
     if (!empty($item['post'])) {
         $confirm = empty($item['confirm']) ? '' : ' data-confirm="'.e((string) $item['confirm']).'"';
 
+        $hidden = '';
+        foreach (($item['fields'] ?? []) as $fieldName => $fieldValue) {
+            $hidden .= '<input type="hidden" name="'.e((string) $fieldName).'" value="'.e((string) $fieldValue).'">';
+        }
+
         return '<form method="POST" action="'.e((string) $item['post']).'" class="m-0" role="none">'
             .csrf_field()
+            .$hidden
             .'<button type="submit" role="menuitem" tabindex="-1"'.$confirm.' class="'.$class.'">'.$icon.$label.'</button>'
             .'</form>';
     }

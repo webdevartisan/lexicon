@@ -29,8 +29,7 @@ $I->seeThePageLooksRight('20-category-and-tag');
 // An image in the media library
 $inline = $I->makeImage('walk-inline', '#8f5a3b');
 $I->amOnPage("{$blog}/media");
-$I->openTheMediaUploader();
-$I->attachFile('#media-uploader-input', $inline);
+$I->attachFile('#media-file-input', $inline);
 $I->waitForText("{$inline} uploaded", 15);
 $I->dontSee('Upload failed');
 $I->seeThePageLooksRight('21-media-library');
@@ -39,9 +38,11 @@ $I->seeThePageLooksRight('21-media-library');
 $I->amOnPage($postEditUrl);
 $I->waitForElement('#content_ifr', 15);
 $I->attachFile('input.dz-hidden-input', $I->makeImage('walk-cover'));
-$I->chooseFromMenu('#category_id', 'Field notes');
+$I->openEditorDialog('postOrganizeDialog');
+$I->selectOption('#category_id', 'Field notes');
 $I->fillField('#tagInput', 'walks');
 $I->pressKey('#tagInput', WebDriverKeys::ENTER);
+$I->closeEditorDialog('postOrganizeDialog');
 // At this width the image button sits in the toolbar's overflow menu
 $I->scrollDownTo('button[aria-label="Reveal or hide additional toolbar items"]');
 $I->click('button[aria-label="Reveal or hide additional toolbar items"]');
@@ -130,7 +131,7 @@ $I->seeInTitle('Page not found');
 // Publishing again brings it back
 $I->signInAs('writer');
 $I->amOnPage($postEditUrl);
-$I->click('Publish');
+$I->publishFromTheEditor();
 $I->waitForText('Post updated');
 $I->see('Published');
 $I->amAGuest();
@@ -154,7 +155,7 @@ $I->amOnPage($postEditUrl);
 $I->click('[data-actionbar-primary]');
 $I->waitForText('Post updated');
 $I->see('Draft');
-$I->click('Publish');
+$I->publishFromTheEditor();
 $I->waitForText('Post updated');
 $I->see('Published');
 $I->amAGuest();
@@ -172,13 +173,14 @@ $I->fillField('title', 'A post for tomorrow '.date('His'));
 $I->waitForJS("return document.querySelector('input[name=slug]').value !== ''");
 $scheduledSlug = $I->grabValueFrom('slug');
 $I->writeInTheEmptyEditor('Scheduled from the walkthrough.');
-// The side column sticks while scrolling, so its lower half only shows at the end of the page
-$I->pressKey('body', WebDriverKeys::END);
-$I->wait(1);
+// The date lives in the check that opens before publishing
+$I->click('[data-publish-check]');
+$I->waitForElementVisible('#published_at-shown');
 $I->click('#published_at-shown');
 $I->click('.flatpickr-calendar.open [aria-label="'.date('F j, Y', strtotime('+1 day')).'"]');
-$I->pressKey('#published_at-shown', WebDriverKeys::ESCAPE);
-$I->click('Schedule');
+$I->click('#postPublishDialog-title');
+$I->waitForText('Schedule', 5, '#postPublishDialog');
+$I->click('#postPublishDialog button[name=intent]');
 $I->waitForText('Post saved');
 $scheduledEditUrl = $I->grabFromCurrentUrl();
 $I->seeThePageLooksRight('28-post-scheduled');
@@ -191,8 +193,11 @@ $I->signInAs('writer');
 $I->amOnPage($scheduledEditUrl);
 $I->waitForElement('#content_ifr', 15);
 $I->see('Update schedule', '[data-actionbar-primary]');
-$I->scrollDownTo('[data-clear-schedule]');
+$I->click('[data-publish-check]');
+$I->waitForElementVisible('[data-clear-schedule]');
 $I->click('[data-clear-schedule]');
+$I->see('Publish now', '#postPublishDialog [data-actionbar-primary]');
+$I->closeEditorDialog('postPublishDialog');
 $I->see('Publish now', '[data-actionbar-primary]');
 
 // "Publish now" from the menu puts it live straight away, though its date is still ahead
@@ -215,10 +220,8 @@ $I->writeInTheEmptyEditor('Short-lived.');
 $I->click('Save draft');
 $I->waitForText('Post saved');
 $draftUrl = $I->grabFromCurrentUrl();
-$I->pressKey('body', WebDriverKeys::END);
-$I->wait(1);
 // The question names the post, and deleting goes back to the post list
-$I->click('Delete post');
+$I->deleteFromTheEditor();
 $I->waitForElementVisible('#confirmModalDanger');
 $I->see('Permanently delete “A post to delete”?', '#confirmModalDanger');
 $I->click('#confirmModalDanger [data-modal-confirm]');
@@ -234,9 +237,7 @@ $I->waitForElement('#content_ifr', 15);
 $I->fillField('title', 'Changed, then deleted');
 // Added after the page's own leave check, so it records what that check decided
 $I->executeJS("sessionStorage.removeItem('leaveWarned'); window.addEventListener('beforeunload', function (e) { sessionStorage.setItem('leaveWarned', String(e.defaultPrevented)); });");
-$I->pressKey('body', WebDriverKeys::END);
-$I->wait(1);
-$I->click('Delete post');
+$I->deleteFromTheEditor();
 $I->waitForElementVisible('#confirmModalDanger');
 $I->click('#confirmModalDanger [data-modal-confirm]');
 $I->waitForText('deleted.');

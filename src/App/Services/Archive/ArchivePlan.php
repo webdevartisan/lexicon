@@ -19,6 +19,7 @@ final class ArchivePlan
      * @param  array<string, array{path: string, original_name: string, alt: ?string, usable: bool, reason: ?string}>  $media  Keyed by archive path
      * @param  list<array{type: string, subject: string, detail: string}>  $problems
      * @param  array<string, true>  $missingAtExport  Upload URLs the exporter found missing on disk
+     * @param  list<string>  $modules  Modules whose rows the archive carries, checked against its files
      */
     public function __construct(
         public readonly array $source,
@@ -26,6 +27,7 @@ final class ArchivePlan
         public readonly array $media,
         public readonly array $problems,
         public readonly array $missingAtExport = [],
+        public readonly array $modules = [],
     ) {}
 
     /**

@@ -16,17 +16,18 @@
 
         <div class="acct-head">
             <h1 class="acct-title"><?= e($t('account.profile.socialSection')) ?></h1>
+            <p class="acct-intro"><?= e($t('account.profile.socialIntro')) ?></p>
         </div>
 
         <form method="post" action="<?= e(lurl('/account/profile/update')) ?>" class="acct-form">
             <?= csrf_field() ?>
             <input type="hidden" name="section" value="social">
             <div class="acct-grid">
-                <?php $field('website', $t('account.profile.website'), 'url', (string) ($user['website'] ?? '')); ?>
-                <?php $field('twitter', $t('account.profile.twitter'), 'url', (string) ($user['twitter'] ?? '')); ?>
-                <?php $field('instagram', $t('account.profile.instagram'), 'url', (string) ($user['instagram'] ?? '')); ?>
-                <?php $field('linkedin', $t('account.profile.linkedin'), 'url', (string) ($user['linkedin'] ?? '')); ?>
-                <?php $field('github', $t('account.profile.github'), 'url', (string) ($user['github'] ?? '')); ?>
+                <?php $field('website', $t('account.profile.website'), 'url', (string) ($user['website'] ?? ''), 'https://example.com'); ?>
+                <?php $field('twitter', $t('account.profile.twitter'), 'url', (string) ($user['twitter'] ?? ''), 'https://x.com/username'); ?>
+                <?php $field('instagram', $t('account.profile.instagram'), 'url', (string) ($user['instagram'] ?? ''), 'https://instagram.com/username'); ?>
+                <?php $field('linkedin', $t('account.profile.linkedin'), 'url', (string) ($user['linkedin'] ?? ''), 'https://linkedin.com/in/username'); ?>
+                <?php $field('github', $t('account.profile.github'), 'url', (string) ($user['github'] ?? ''), 'https://github.com/username'); ?>
             </div>
 
             <div class="acct-actions">

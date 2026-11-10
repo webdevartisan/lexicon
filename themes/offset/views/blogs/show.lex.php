@@ -58,7 +58,7 @@ $blogTitle = e($blog['blog_name'] ?? 'OFFSET');
     $fTitle = e($featuredPost['title'] ?? 'Untitled');
     $fExc = e(post_excerpt($featuredPost, 220));
     $fAuthor = author_byline($featuredPost['author_name'], $featuredPost['author_handle'], $featuredPost['author_profile_handle']);
-    $fDate = e(local_datetime($featuredPost['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
+    $fDate = reader_date($featuredPost['published_at'] ?? null, 'j M Y');
     $fCat = e($featuredPost['category'] ?? $t('offset::home.fallbackCategory'));
     $fMinutes = reading_time($featuredPost['content'] ?? '');
     ?>

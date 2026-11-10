@@ -35,6 +35,7 @@
         <a href="<?= $homeUrl ?>"><span<?= $wording->attrs('folio::nav.home') ?>><?= $wording->html('folio::nav.home') ?></span></a>
         <a href="<?= $archiveUrl ?>"><span<?= $wording->attrs('folio::nav.archive') ?>><?= $wording->html('folio::nav.archive') ?></span></a>
         <a href="<?= $subscribeUrl ?>"><span<?= $wording->attrs('folio::nav.subscribe') ?>><?= $wording->html('folio::nav.subscribe') ?></span></a>
+        {% slot "blog.nav" %}
       </nav>
 
       <div class="masthead-actions">

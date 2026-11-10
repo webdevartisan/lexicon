@@ -156,6 +156,8 @@ test('a correct password records the change but does not apply it yet', function
     $response = ($this->requestChange)($newEmail, $this->password);
 
     expect($response->getStatusCode())->toBe(302)
+        // The address is managed on the Security page, so that is where the person lands.
+        ->and($response->getHeader('Location'))->toContain('/account/security')
         // The whole point: the account still answers to the old address.
         ->and($this->users->findById($this->userId)['email'])->toBe($this->email);
 

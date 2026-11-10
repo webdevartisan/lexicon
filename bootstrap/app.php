@@ -42,6 +42,9 @@ $container = require ROOT_PATH.'/config/services.php';
 
 App::setContainer($container);
 
+// Installed modules bind their services before any request or command needs them
+$container->get(\Framework\Modules\ModuleBooter::class)->registerAll();
+
 // Mailables build themselves in their constructor, so they cannot take the
 // renderer as a dependency. Point them at the one that reads what was saved in
 // the control panel; anything that never boots the app gets the shipped emails.

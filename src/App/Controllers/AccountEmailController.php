@@ -78,7 +78,7 @@ final class AccountEmailController extends AppController
 
         $this->flash('success', chrome_translate('account.flash.emailChangePending', ['email' => $newEmail]));
 
-        return $this->redirect(lurl('/account/preferences'));
+        return $this->redirect(lurl('/account/security'));
     }
 
     /**
@@ -98,7 +98,7 @@ final class AccountEmailController extends AppController
         if (!$row || (int) $row['user_id'] !== $userId) {
             $this->flash('error', chrome_translate('account.flash.emailChangeLinkInvalid'));
 
-            return $this->redirect(lurl('/account/preferences'));
+            return $this->redirect(lurl('/account/security'));
         }
 
         $newEmail = (string) $row['new_email'];
@@ -110,7 +110,7 @@ final class AccountEmailController extends AppController
             $this->pending->deleteForUser($userId);
             $this->flash('error', chrome_translate('account.flash.emailInUse'));
 
-            return $this->redirect(lurl('/account/preferences'));
+            return $this->redirect(lurl('/account/security'));
         }
 
         $this->users->updateById($userId, ['email' => $newEmail]);
@@ -138,7 +138,7 @@ final class AccountEmailController extends AppController
             $this->flash('info', chrome_translate('account.flash.otherDevicesSignedOut'));
         }
 
-        return $this->redirect(lurl('/account/preferences'));
+        return $this->redirect(lurl('/account/security'));
     }
 
     /**
@@ -152,7 +152,7 @@ final class AccountEmailController extends AppController
 
         $this->flash('success', chrome_translate('account.flash.emailChangeCancelled'));
 
-        return $this->redirect(lurl('/account/preferences'));
+        return $this->redirect(lurl('/account/security'));
     }
 
     /**
@@ -165,6 +165,6 @@ final class AccountEmailController extends AppController
         $this->session->set('_old_input', ['new_email' => $this->request->postParam('new_email')]);
         $this->flash('error', $message);
 
-        return $this->redirect(lurl('/account/preferences'));
+        return $this->redirect(lurl('/account/security'));
     }
 }

@@ -19,6 +19,10 @@ use RuntimeException;
  */
 final class MediaService
 {
+    public const UPLOAD_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
+
+    public const UPLOAD_MAX_BYTES = 50 * 1024 * 1024;
+
     public function __construct(
         private UploadService $uploads,
         private MediaModel $media,
@@ -50,8 +54,8 @@ final class MediaService
         $url = $this->uploads->storeImage($file, [
             'dir' => $dir,
             'base_url' => $baseUrl,
-            'allowed_ext' => ['jpg', 'jpeg', 'png', 'webp'],
-            'max_bytes' => 50 * 1024 * 1024,
+            'allowed_ext' => self::UPLOAD_EXTENSIONS,
+            'max_bytes' => self::UPLOAD_MAX_BYTES,
             'preset' => 'media',
             'rename' => 'image',
         ]);

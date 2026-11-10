@@ -524,6 +524,84 @@ class PostListingModel extends AppModel
     }
 
     /**
+     * How many posts went live in the last few days.
+     *
+     * @param  int|null  $authorId  One writer's posts, or null for the whole blog
+     */
+    public function countPublishedSince(int $blogId, ?int $authorId, int $days): int
+    {
+        [$authorSql, $params] = $this->authorFilter($authorId, [$blogId, $days]);
+
+        $sql = "SELECT COUNT(*) FROM {$this->getTable()}
+                WHERE blog_id = ? AND status = 'published'
+                  AND published_at <= NOW() AND published_at >= NOW() - INTERVAL ? DAY{$authorSql}";
+
+        return (int) $this->database->query($sql, $params)->fetchColumn();
+    }
+
+    /**
+     * Posts published per rolling week, oldest week first, so the last entry is the past seven days.
+     *
+     * @param  int|null  $authorId  One writer's posts, or null for the whole blog
+     * @return list<int> One count per week, zero for a quiet week
+     */
+    public function publishedPerWeek(int $blogId, ?int $authorId, int $weeks): array
+    {
+        [$authorSql, $params] = $this->authorFilter($authorId, [$blogId, $weeks * 7]);
+
+        $sql = "SELECT FLOOR(DATEDIFF(NOW(), published_at) / 7) AS weeks_ago, COUNT(*) AS cnt
+                FROM {$this->getTable()}
+                WHERE blog_id = ? AND status = 'published'
+                  AND published_at <= NOW() AND published_at >= NOW() - INTERVAL ? DAY{$authorSql}
+                GROUP BY weeks_ago";
+
+        $series = array_fill(0, $weeks, 0);
+        foreach ($this->database->query($sql, $params)->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+            $index = $weeks - 1 - (int) $row['weeks_ago'];
+            if ($index >= 0 && $index < $weeks) {
+                $series[$index] = (int) $row['cnt'];
+            }
+        }
+
+        return $series;
+    }
+
+    /**
+     * The scheduled post that goes live first.
+     *
+     * @param  int|null  $authorId  One writer's posts, or null for the whole blog
+     * @return array{id: int, title: string, published_at: string}|null
+     */
+    public function nextScheduled(int $blogId, ?int $authorId): ?array
+    {
+        [$authorSql, $params] = $this->authorFilter($authorId, [$blogId]);
+
+        $sql = "SELECT id, title, published_at FROM {$this->getTable()}
+                WHERE blog_id = ? AND status = 'scheduled' AND published_at IS NOT NULL{$authorSql}
+                ORDER BY published_at ASC
+                LIMIT 1";
+
+        $row = $this->database->query($sql, $params)->fetch(\PDO::FETCH_ASSOC);
+
+        return $row === false ? null : $row;
+    }
+
+    /**
+     * The optional "one writer only" clause and its parameter, appended to a positional query.
+     *
+     * @param  list<int>  $params  Parameters of the query so far
+     * @return array{0: string, 1: list<int>}
+     */
+    private function authorFilter(?int $authorId, array $params): array
+    {
+        if ($authorId === null) {
+            return ['', $params];
+        }
+
+        return [' AND author_id = ?', [...$params, $authorId]];
+    }
+
+    /**
      * Get total count of records matching filter criteria.
      *
      * Uses a separate COUNT query instead of SQL_CALC_FOUND_ROWS for better performance

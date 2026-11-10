@@ -15,6 +15,7 @@ use Framework\Security\Csrf;
 use Tests\Factories\BlogFactory;
 use Tests\Factories\PostFactory;
 use Tests\Factories\UserFactory;
+use Tests\Helpers\DatabaseHelper;
 
 /**
  * Duplicating a post offers a free name and address, then makes a fresh draft
@@ -24,10 +25,8 @@ beforeEach(function () {
     if ($this->db->getConnection()->inTransaction()) {
         $this->db->getConnection()->rollBack();
     }
+    // Copying opens its own transaction, which cannot nest in a test one, so rows are committed and cleaned after.
     $this->db = App::container()->get(\Framework\Database::class);
-    if (!$this->db->getConnection()->inTransaction()) {
-        $this->db->getConnection()->beginTransaction();
-    }
 
     $_SESSION = [];
     auth()->logout();
@@ -86,6 +85,7 @@ beforeEach(function () {
 afterEach(function () {
     $_SESSION = [];
     auth()->logout();
+    DatabaseHelper::cleanDatabase($this->db);
 });
 
 it('offers the first free copy name and address', function () {

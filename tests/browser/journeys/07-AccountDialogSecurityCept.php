@@ -12,7 +12,7 @@ $I->amOnPage('/en');
 $I->click('.nav-user-btn');
 $I->waitForElementVisible('.nav-user-menu', 5);
 $I->click('Settings', '.nav-user-menu');
-$I->waitForElementVisible('[data-panel-dialog] #first_name', 10);
+$I->waitForElementVisible('[data-panel-dialog] #occupation', 10);
 
 $I->openSettingsPage('Security');
 $I->waitForText('Where you', 10, '[data-panel-dialog]');
@@ -21,6 +21,11 @@ $I->dontSee('Sign-in activity', '[data-panel-dialog]');
 $I->click('[data-panel-dialog] .acct-session.is-current summary');
 $I->waitForElementVisible('[data-panel-dialog] .acct-session.is-current form', 5);
 $I->makeScreenshot('account-dialog-security');
+
+// The sign-in address is managed beside the password
+$I->see('Sign-in address', '[data-panel-dialog]');
+$I->click('[data-panel-dialog] section[aria-labelledby=contact-heading] summary');
+$I->waitForElementVisible('[data-panel-dialog] #new_email', 5);
 
 // Change password opens its own page in the dialog
 $I->click('Change password', '[data-panel-dialog] .acct-card-row');
@@ -36,9 +41,9 @@ $I->makeScreenshot('account-dialog-two-factor');
 $I->click('.acct-back', '[data-panel-dialog]');
 $I->waitForText('Where you', 10, '[data-panel-dialog]');
 
-// Your data stays on Security; closing the account has its own Danger tab
+// Your data stays on Security; closing the account has its own Delete account tab
 $I->see('Your data', '[data-panel-dialog]');
-$I->openSettingsPage('Danger');
+$I->openSettingsPage('Delete account');
 $I->waitForElementVisible('[data-panel-dialog] .acct-details summary', 10);
 $I->dontSeeElement('[data-panel-dialog] .acct-details form input[name=password]:not([hidden])[type=password]:checked');
 $I->makeScreenshot('account-dialog-delete');

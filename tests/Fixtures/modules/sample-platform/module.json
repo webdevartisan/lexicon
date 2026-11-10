@@ -1,0 +1,11 @@
+{
+    "key": "sample-platform",
+    "name": "Sample platform extra",
+    "description": "A site wide module used by the module system tests.",
+    "version": 1,
+    "scope": "platform",
+    "class": "Tests\\Fixtures\\Modules\\SamplePlatform\\SamplePlatformModule",
+    "slots": ["body.end"],
+    "tables": ["sample_platform_items"],
+    "requires": []
+}

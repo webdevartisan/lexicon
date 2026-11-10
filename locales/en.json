@@ -29,6 +29,7 @@
         "blogSection": "Manage Blog",
         "editBlogSettings": "Blog Settings",
         "appearanceTheme": "Appearance",
+        "extras": "Extras",
         "collaborators": "Collaborators",
         "team": "Team",
         "subscribers": "Subscribers",
@@ -79,7 +80,7 @@
         "frontPage": "Front Page",
         "pages": "Pages",
         "account": "Settings",
-        "overview": "Overview",
+        "overview": "Home",
         "reviewQueue": "Review queue"
     },
     "breadcrumbs": {
@@ -108,7 +109,7 @@
         "account": "Account",
         "security": "Security",
         "emailNotifications": "Email Notifications",
-        "overview": "Overview"
+        "overview": "Home"
     },
     "dashboard": {
         "blogSelector": {
@@ -161,20 +162,43 @@
                 "shared": "Shared"
             },
             "search": "Search blogs",
-            "anyStatus": "Any status",
             "sort": {
                 "updated": "Last updated",
                 "created": "Date created",
                 "posts": "Most posts",
-                "name": "Name (A to Z)"
+                "name": "Name (A to Z)",
+                "label": "Sort"
             },
             "create": "Create a blog",
             "clearFilters": "Clear filters",
+            "filters": {
+                "title": "Filters",
+                "all": "All",
+                "status": "Status",
+                "role": "Role",
+                "apply": "Apply"
+            },
+            "view": {
+                "label": "View",
+                "cards": "Cards",
+                "compact": "Compact list"
+            },
+            "col": {
+                "name": "Blog",
+                "role": "Role",
+                "status": "Status",
+                "posts": "Posts",
+                "team": "Collaborators",
+                "updated": "Updated",
+                "actions": "Actions"
+            },
+            "item": {
+                "one": "blog",
+                "other": "blogs"
+            },
             "empty": {
                 "filteredTitle": "No blogs match your filters",
-                "filteredText": "Try a different search or another status.",
-                "noOwned": "You don't own a blog yet. Start one whenever you like.",
-                "groupFiltered": "None of these match your filters."
+                "filteredText": "Try a different search or another status."
             },
             "active": "Active",
             "open": "Open",
@@ -272,8 +296,7 @@
             }
         },
         "overview": {
-            "title": "Overview",
-            "yourRole": "Your role: {role}",
+            "title": "Home",
             "myDrafts": "Your drafts",
             "submitted": "Submitted",
             "needsRevision": "Needs revision",
@@ -292,7 +315,80 @@
             "allYourPosts": "All your posts",
             "noDrafts": "No drafts in progress.",
             "viewAll": "View all",
-            "back": "Back to overview"
+            "back": "Back to home"
+        },
+        "home": {
+            "drafts": {
+                "one": "{count} draft",
+                "other": "{count} drafts"
+            },
+            "scheduled": "{count} scheduled",
+            "views": "Views, 7 days",
+            "context": {
+                "publishedMonth": "+{count} this month",
+                "publishedNone": "None this month",
+                "commentsWaiting": "{count} waiting",
+                "commentsWeek": "+{count} this week",
+                "commentsNone": "None new this week",
+                "subscribersWeek": "+{count} this week",
+                "subscribersNone": "None new this week",
+                "viewsCompare": "{change} vs previous 7 days",
+                "viewsNone": "No visits yet"
+            },
+            "activity": {
+                "title": "Recent activity",
+                "empty": "Nothing has happened here yet.",
+                "comment": "{actor} commented on {post}",
+                "commentGuest": "Someone commented on {post}",
+                "commentPending": "Waiting for review",
+                "published": "{post} was published",
+                "publishedBy": "By {actor}",
+                "subscriber": "New subscriber",
+                "subscriberDetail": "Confirmed by email",
+                "member": "{actor} joined the team",
+                "more": "Show more",
+                "less": "Show less"
+            },
+            "mostRead": {
+                "title": "Most read, last 7 days",
+                "views": {
+                    "one": "{count} view",
+                    "other": "{count} views"
+                }
+            },
+            "attention": {
+                "clear": "Nothing needs your attention.",
+                "comments": {
+                    "one": "{count} comment waiting for review",
+                    "other": "{count} comments waiting for review"
+                },
+                "review": {
+                    "one": "{count} post awaiting review",
+                    "other": "{count} posts awaiting review"
+                },
+                "revisit": {
+                    "one": "{count} post sent back for changes",
+                    "other": "{count} posts sent back for changes"
+                }
+            },
+            "rhythm": {
+                "title": "Publishing rhythm",
+                "span": "Last 12 weeks",
+                "total": {
+                    "one": "{count} post in the last 12 weeks",
+                    "other": "{count} posts in the last 12 weeks"
+                },
+                "bar": {
+                    "one": "{count} post",
+                    "other": "{count} posts"
+                },
+                "upNext": "Next scheduled: {post}, {when}"
+            },
+            "quickDraft": {
+                "label": "Start a draft",
+                "placeholder": "Post title",
+                "submit": "Write"
+            }
         },
         "reviewQueue": {
             "subtitle": "Posts waiting on a reviewer: yours to claim or pass along.",
@@ -318,41 +414,49 @@
         },
         "team": {
             "subtitle": "Invite collaborators and manage who can write, review, and publish for this blog.",
-            "workflowOff": "Editorial workflow is off for this blog, so reviewer-related controls (review queue, reviewer role, workflow health) are hidden.",
+            "workflowOff": "Editorial workflow is off for this blog, so the Reviewer role and the review queue are hidden.",
             "workflowOffTurnOn": "Turn it on in {link} if you want submissions to go through a review pipeline before publishing.",
             "health": {
-                "title": "Workflow health",
-                "assigned": "In review, assigned",
-                "unassigned": "In review, unassigned",
-                "needsChanges": "Needs changes",
-                "approved": "Approved, not published",
-                "inReviewNow": "In review now",
-                "byLine": "by {author} · reviewed by {reviewer}"
+                "alert": "Posts in review without a reviewer: {count}"
+            },
+            "columns": {
+                "member": "Member",
+                "role": "Role",
+                "status": "Status",
+                "actions": "Actions"
+            },
+            "status": {
+                "active": "Active",
+                "invited": "Invited",
+                "expired": "Expired"
+            },
+            "modal": {
+                "cancel": "Cancel",
+                "close": "Close"
             },
             "members": {
-                "title": "Active collaborators",
-                "empty": "No collaborators yet. Invite someone using the form to start working together.",
-                "role": "Role",
+                "empty": "No collaborators yet. Use Invite to start working together.",
+                "changeRole": "Change role",
+                "saveRole": "Save role",
                 "remove": "Remove",
                 "removeConfirm": "Remove {handle} from this blog? They will need a new invitation to rejoin."
             },
             "invite": {
+                "open": "Invite",
                 "title": "Invite by email",
                 "email": "Email",
                 "role": "Role",
                 "send": "Send invite",
-                "pending": "Pending invitations",
-                "expires": "{role} · expires {when}",
-                "cancel": "Cancel",
-                "expiredTitle": "Expired (resend to retry)",
-                "expired": "{role} · expired {date}",
-                "resend": "Resend",
-                "drop": "Drop"
+                "expires": "Expires {when}",
+                "cancel": "Cancel invite",
+                "expired": "Expired {date}",
+                "resend": "Resend invite",
+                "drop": "Remove invite"
             },
             "transfer": {
                 "title": "Transfer ownership",
                 "text": "Hand this blog to one of its collaborators. They get full control, including deleting it, and you stay on as an editor.",
-                "confirm": "Transfer ownership of this blog? You cannot undo this yourself.",
+                "confirm": "You cannot undo this yourself.",
                 "newOwner": "New owner",
                 "password": "Your password"
             },
@@ -414,7 +518,7 @@
         },
         "paginator": {
             "ariaLabels": {
-                "pagination": "Posts pagination",
+                "pagination": "Pagination",
                 "previousPage": "Go to previous page",
                 "previousUnavailable": "Previous page unavailable",
                 "nextPage": "Go to next page",
@@ -624,19 +728,15 @@
             "pageTitle": "Edit Blog Settings",
             "pageSubtitle": "Update details, localization, theme, SEO, and comments settings."
         },
+        "delete": {
+            "pageTitle": "Delete Blog"
+        },
+        "invitation": {
+            "pageTitle": "Blog Invitation"
+        },
         "settings": {
             "pageTitle": "Blog Settings",
-            "pageSubtitle": "Everything about how your blog looks and behaves, grouped by topic.",
-            "tabs": {
-                "general": "General",
-                "appearance": "Appearance",
-                "seo": "SEO",
-                "discussion": "Discussion & Workflow"
-            },
-            "address": {
-                "label": "Blog address",
-                "help": "Readers can open this link once the blog is published. The address is fixed after creation."
-            }
+            "pageSubtitle": "Everything about how your blog looks and behaves, grouped by topic."
         },
         "themes": {
             "pageTitle": "Themes",
@@ -667,7 +767,7 @@
                 },
                 "localization": {
                     "title": "Localization",
-                    "description": "Default language and time zone."
+                    "description": "Default language and translations."
                 },
                 "seo": {
                     "title": "SEO",
@@ -714,9 +814,6 @@
                 },
                 "locale": {
                     "label": "Language"
-                },
-                "timezone": {
-                    "label": "Time zone"
                 },
                 "metaTitle": {
                     "label": "Meta Title",
@@ -910,7 +1007,8 @@
         "title": "Featured writing",
         "subtitle": "Posts picked by our editors from writers across Lexicon.",
         "emptyTitle": "New here? Start with these guides",
-        "readPost": "Read post"
+        "readPost": "Read post",
+        "moreOnDiscover": "More featured writing on Discover"
     },
     "faq": {
         "title": "Frequently asked questions",
@@ -966,7 +1064,19 @@
         "visitBlog": "Visit blog",
         "readMore": "Read more",
         "byLabel": "by",
-        "paginationAria": "Pagination"
+        "paginationAria": "Pagination",
+        "paginationPrev": "Previous page",
+        "paginationNext": "Next page",
+        "featuredPosts": "Featured posts",
+        "fromBlog": "From",
+        "sliderPrev": "Previous featured post",
+        "sliderNext": "Next featured post",
+        "sliderDots": "Choose a featured post",
+        "sliderDot": "Featured post {n} of {total}",
+        "minRead": "{n} min read",
+        "viewLabel": "Show posts as",
+        "viewGrid": "Grid",
+        "viewList": "List"
     },
     "reader": {
         "metaSaved": "Saved",
@@ -1103,11 +1213,20 @@
         "readGuide": "Read the guide",
         "backToGuides": "All guides",
         "contactForm": {
-            "name": "Your name",
-            "email": "Your email",
+            "name": "Name",
+            "email": "Email address",
             "subject": "Subject",
             "message": "Message",
-            "send": "Send message"
+            "send": "Send message",
+            "required": "All fields are required.",
+            "imprintEmail": "Email",
+            "imprintReplies": "Replies",
+            "replyTime": "Within 2 working days",
+            "sentHeading": "Message sent",
+            "sentBody": "Thanks for writing. We'll reply to the address you gave within 2 working days.",
+            "sendAnother": "Send another message",
+            "tooMany": "Too many messages. Please try again later.",
+            "notSent": "Your message could not be sent right now. Please try again later."
         }
     },
     "post": {
@@ -1266,35 +1385,42 @@
     "account": {
         "nav": {
             "profile": "Profile",
-            "public": "Public page",
+            "name": "Name and tag",
             "social": "Social links",
             "preferences": "Preferences",
-            "notifications": "Notifications",
+            "notifications": "Email notifications",
             "security": "Security",
-            "danger": "Danger"
+            "danger": "Delete account"
         },
         "profile": {
-            "heading": "Public profile",
-            "intro": "This is what readers see. Your email and posting defaults live under Preferences.",
+            "heading": "Profile",
+            "intro": "Your photo and the details readers see on your profile.",
             "nameSection": "Name",
             "firstName": "First name",
             "lastName": "Last name",
             "aboutSection": "About you",
+            "nameHeading": "Name and tag",
+            "nameIntro": "How you appear next to your posts and comments.",
+            "tagSection": "Tag",
+            "address": "Your profile lives at {url}.",
+            "openProfile": "Open profile",
+            "hidden": "Your profile is hidden, so only you can open it.",
+            "changeVisibility": "Change this in Preferences.",
+            "socialIntro": "Shown on your profile.",
             "occupation": "Occupation",
             "occupationPlaceholder": "e.g. Blogger, Software Engineer",
             "location": "Location",
             "bio": "Bio",
-            "publicPageSection": "Public page",
             "tag": "Your tag",
-            "tagHelp": "Readers see you as @{tag}, and it is the address of your public page. Lowercase letters, numbers and hyphens.",
-            "showName": "Show my name as well as my tag",
+            "tagHelp": "Readers see you as @{tag}. Lowercase letters, numbers and hyphens.",
+            "showName": "Show my name with my tag",
             "showNameHelp": "When off, readers see only @{tag} next to your posts and comments.",
             "tagPlaceholder": "your-name",
-            "makePublic": "Make my profile public",
-            "makePublicHelp": "When off, your profile page returns a 404 for visitors.",
+            "makePublic": "Anyone can view my profile",
+            "makePublicHelp": "When off, only you can open it.",
             "socialSection": "Social links",
             "website": "Website",
-            "twitter": "Twitter (X)",
+            "twitter": "X",
             "instagram": "Instagram",
             "linkedin": "LinkedIn",
             "github": "GitHub",
@@ -1313,19 +1439,16 @@
             "activityHeading": "Activity summary",
             "totalPosts": "Total posts",
             "commentsReceived": "Comments received",
-            "publicPageHeading": "Your public page",
-            "viewPublicProfile": "View your public profile",
             "save": "Save changes",
             "memberSince": "Member since",
-            "statusLive": "Live",
-            "statusHidden": "Hidden",
             "removeAvatarConfirmTitle": "Remove avatar?",
             "removeAvatarConfirmText": "Your profile photo will be removed and replaced with your initials. You can upload a new one at any time."
         },
         "preferences": {
             "heading": "Preferences",
-            "intro": "Your sign-in address, and how the interface behaves for you.",
+            "intro": "How the site looks and behaves for you, and who can see your profile.",
             "contactSection": "Sign-in address",
+            "privacySection": "Privacy",
             "email": "Email",
             "emailHelp": "You sign in with this address, and account recovery is sent to it.",
             "changeEmail": "Change email",
@@ -1353,7 +1476,6 @@
             "dataHeading": "Your data",
             "dataText": "Download a copy of everything we hold about you: your account, profile, posts, comments and activity, as a JSON file.",
             "dataDownload": "Download my data",
-            "dangerHeading": "Close this account",
             "dangerText": "Deleting is permanent. Your posts, comments and blogs are erased along with the account.",
             "deleteLink": "Delete account",
             "save": "Save changes"
@@ -1436,7 +1558,7 @@
         },
         "security": {
             "changePassword": "Change password",
-            "pageIntro": "Your password, two-step sign-in, devices and data.",
+            "pageIntro": "Your sign-in address, password, two-step sign-in, devices and data.",
             "passwordHeading": "Password",
             "heading": "Change password",
             "intro": "Use a strong password you don't reuse anywhere else.",
@@ -1454,7 +1576,6 @@
             "warningStrong": "Warning:",
             "warningText": "This action is permanent and cannot be undone.",
             "cannotDeleteStrong": "This account cannot be deleted yet:",
-            "backToPreferences": "Back to preferences",
             "removedHeading": "What happens when you delete your account",
             "removedAccount": "Your account is deactivated immediately: signing in stops working right away, and it cannot be recovered.",
             "removedTiming": "Your data is permanently erased {days} days from today.",
@@ -1470,7 +1591,6 @@
             "confirmPasswordHelp": "Password confirmation is required for security.",
             "confirmCheckbox": "I understand that this action is permanent and cannot be undone.",
             "submit": "Delete my account permanently",
-            "cancel": "Cancel",
             "confirmModalTitle": "Close your account?",
             "confirmModalText": "This permanently deletes your account and cannot be undone."
         },
@@ -2046,64 +2166,71 @@
             "subtitle": "Download every post in this blog as one archive, or bring an archive back in."
         },
         "export": {
-            "heading": "Download an archive",
-            "body": "One zip with your posts, their categories and tags, and the images they use. Comments, settings and the theme are not included.",
-            "includeDrafts": "Include drafts and posts that are not live",
-            "includeDraftsHelp": "Drafts, pending, scheduled and archived posts. Private and unlisted posts are always included.",
+            "heading": "Back up",
+            "body": "Posts, categories, tags and images in one zip. No comments, settings or theme.",
+            "includeDrafts": "Include drafts and unpublished posts",
             "moderated": "Posts held by moderation are left out and listed in the archive.",
             "button": "Download archive"
         },
         "import": {
-            "heading": "Import an archive",
-            "body": "Restore this blog from one of its archives, or copy posts in from another blog you own. Nothing changes until you confirm.",
-            "drop": "Drop a .zip archive here",
+            "heading": "Restore or import",
+            "sourceLabel": "Where is the file from?",
+            "sourceLexicon": "Lexicon archive",
+            "sourceWordpress": "WordPress",
+            "sourceGhost": "Ghost",
+            "lexiconHelp": "Restore this blog from one of its archives, or copy posts in from another blog you own.",
+            "drop": "Drop a {type} file here",
             "choose": "or choose a file",
-            "limits": "ZIP only, up to {size} MB and {posts} posts.",
-            "reencode": "Images are checked and saved again on the way in, so they will not be byte-for-byte copies of the originals. GIF and SVG images cannot be imported.",
+            "limits": "Up to {size} MB and {posts} posts",
+            "limitsFile": "Up to {size} MB",
+            "reencode": "Images are checked and saved again on the way in, so they will not be byte for byte copies of the originals. GIF and SVG images cannot be imported.",
             "remove": "Remove file",
-            "wrongType": "That is not a .zip file.",
             "tooBig": "That file is larger than {size} MB.",
-            "button": "Check archive",
+            "button": "Check file",
             "checking": "Checking...",
             "cancel": "Cancel import",
             "cancelled": "The import was cancelled and the uploaded archive deleted."
         },
         "foreign": {
-          "heading": "Import from another platform",
-          "body": "Bring your posts over from a WordPress or Ghost export file. Nothing changes until you confirm.",
-          "platform": "Where are you moving from?",
-          "file": "Export file",
-          "wordpressHelp": "In WordPress go to Tools, Export, choose Posts, and upload the .xml file.",
-          "ghostHelp": "In Ghost go to Settings, Labs, Export your content, and upload the .json file.",
-          "siteUrl": "Address of your old site",
-          "siteUrlHelp": "Ghost leaves its own address out of links and images. Enter it so they keep working.",
-          "images": "Images are not copied. They stay as links to your old site, so keep it online until you have replaced them. Everything comes in as a draft unless you choose otherwise.",
-          "wrongType": "That is not a {type} file.",
-          "notWordpress": "That file is not a WordPress export.",
-          "notGhost": "That file is not a Ghost export.",
-          "needSiteUrl": "Ghost leaves its own address out of links, so enter where your old site lived.",
-          "tooLarge": "That file is too large to read.",
-          "empty": "No posts were found in that {source} file."
+            "wordpressHelp": "In WordPress go to Tools, Export, choose Posts, and upload the .xml file. Images stay as links to your old site.",
+            "ghostHelp": "In Ghost go to Settings, Labs, Export your content, and upload the .json file. Images stay as links to your old site.",
+            "siteUrl": "Address of your old site",
+            "siteUrlHelp": "Ghost leaves its own address out of links and images. Enter it so they keep working.",
+            "wrongType": "That is not a {type} file.",
+            "notWordpress": "That file is not a WordPress export.",
+            "notGhost": "That file is not a Ghost export.",
+            "needSiteUrl": "Ghost leaves its own address out of links, so enter where your old site lived.",
+            "tooLarge": "That file is too large to read.",
+            "empty": "No posts were found in that {source} file."
         },
         "preview": {
-          "postsHeading": "Choose posts to import",
-          "postsBody": "Untick any post you do not want to bring in.",
-          "selected": "{count} of {total} selected",
-          "selectAll": "Select all posts",
-          "fileStatus": "Status in file",
-          "date": "Date",
-          "category": "Category",
-          "cannotImport": "Cannot be imported:",
-          "tagCount": "{count} tags",
-            "heading": "What this archive contains",
+            "title": "Review archive",
+            "subtitle": "Pick the posts to bring in. Nothing changes until you confirm.",
             "from": "From {name}, exported {date}",
+            "summaryReady": "{count} ready",
+            "summaryInvalid": "{count} cannot be imported",
+            "summaryCategories": {
+                "one": "{count} category",
+                "other": "{count} categories"
+            },
+            "summaryTags": {
+                "one": "{count} tag",
+                "other": "{count} tags"
+            },
+            "summaryMedia": {
+                "one": "{count} image",
+                "other": "{count} images"
+            },
+            "summarySkipped": {
+                "one": "{count} image left out",
+                "other": "{count} images left out"
+            },
+            "selected": "{count} of {total} selected",
+            "selectAll": "Select all posts",
             "posts": "Posts",
-            "ready": "Ready to import",
-            "invalid": "Cannot be imported",
-            "tags": "Tags",
-            "categories": "Categories",
-            "media": "Images",
-            "mediaSkipped": "Images left out",
+            "fileStatus": "Status in file",
+            "date": "Date",
+            "cannotImport": "Cannot be imported:",
             "clashesHeading": "Posts whose address is already taken",
             "clashesBody": "Slugs this blog already uses: {count}. Choose what happens to all of these posts.",
             "existing": "Existing post",
@@ -2113,14 +2240,16 @@
             "copyHelp": "Give each one a numbered address, like my-post-2.",
             "overwrite": "Overwrite",
             "overwriteHelp": "Replace the existing post's content. Its address, author, comments and stats stay.",
-            "statusHeading": "Status",
+            "optionsHeading": "Options",
             "drafts": "Import everything as drafts",
             "draftsHelp": "Recommended. Nothing goes live until you publish it.",
             "keep": "Keep the original statuses",
             "keepHelp": "Published posts go live straight away. Subscribers are not emailed. Posts awaiting review come in as drafts.",
             "scheduledPast": "{count} scheduled posts have a publish time that has passed and would be published.",
-            "problemsHeading": "Problems found",
-            "noProblems": "No problems found.",
+            "problemsFound": {
+                "one": "{count} problem found",
+                "other": "{count} problems found"
+            },
             "confirm": "Import posts",
             "working": "Importing, this can take a few minutes...",
             "author": "Written by {name}"
@@ -2141,6 +2270,8 @@
             "failed": "Failed",
             "mediaStored": "Images stored",
             "mediaFailed": "Images that could not be stored",
+            "modulesSkipped": "Some extras in this backup are not installed here, so their data was left out: {names}. Keep the backup file if you want it later.",
+            "modulesFailed": "Some extras could not restore their data from this backup: {names}. Your posts were restored as listed below.",
             "none": "None.",
             "back": "Back to Backup & restore",
             "viewPosts": "View posts"
@@ -2268,7 +2399,7 @@
                 "text": "Readers can't see this blog."
             },
             "actions": {
-                "openPost": "Open it",
+                "openPost": "Open post",
                 "goLive": "Put your blog online",
                 "openBlog": "Open blog"
             },
@@ -2571,6 +2702,142 @@
             "categoryDek": "Posts filed under {name}.",
             "tagKicker": "Tagged: {name}",
             "tagDek": "Posts tagged {name}."
+        }
+    },
+    "media": {
+        "page": {
+            "title": "Media library",
+            "subtitle": "Every image for this blog in one place. Upload, find and tidy up."
+        },
+        "toolbar": {
+            "files": "Files",
+            "searchLabel": "Search images by name",
+            "searchPlaceholder": "Search by name",
+            "sourceLabel": "Show images from",
+            "sortLabel": "Sort by",
+            "viewLabel": "Layout",
+            "listView": "List view",
+            "gridView": "Grid view",
+            "menuTitle": "the media library",
+            "filters": "Sort and filter",
+            "select": "Select",
+            "done": "Done"
+        },
+        "sources": {
+            "all": "All sources",
+            "upload": "Library uploads",
+            "post_image": "Post images",
+            "branding": "Branding",
+            "backfill": "Imported",
+            "unused": "Unused only"
+        },
+        "sorts": {
+            "date": "Date added",
+            "name": "Name",
+            "size": "Size"
+        },
+        "actions": {
+            "rescan": "Rescan for images",
+            "optimize": "Shrink oversized images"
+        },
+        "drop": {
+            "title": "Drop images to upload",
+            "limits": "{types} · up to {size} each",
+            "select": "Select files",
+            "inputLabel": "Choose images to upload",
+            "upload": "Upload images"
+        },
+        "loadMore": "Load more",
+        "editor": {
+            "title": "Edit image",
+            "name": "Name",
+            "alt": "Alt text",
+            "altPlaceholder": "Describe the image for screen readers",
+            "saveDetails": "Save details",
+            "cropShape": "Crop shape",
+            "free": "Free",
+            "scaleDown": "Scale down",
+            "fullSize": "Full size",
+            "customWidth": "Custom width (px)",
+            "customWidthPlaceholder": "Auto, height follows the ratio",
+            "quality": "Quality",
+            "qualityHint": "Lower means a smaller file.",
+            "format": "Format",
+            "keepOriginal": "Keep original",
+            "saveAs": "Save as",
+            "newImage": "New image",
+            "overwrite": "Overwrite",
+            "delete": "Delete",
+            "cancel": "Cancel",
+            "apply": "Apply",
+            "sections": "Editor sections",
+            "detailsTab": "Details",
+            "editTab": "Edit image"
+        },
+        "js": {
+            "total": "Total: {size}",
+            "sortAsc": "Sort ascending",
+            "sortDesc": "Sort descending",
+            "edit": "Edit {name}",
+            "download": "Download {name}",
+            "copy": "Copy link to {name}",
+            "copied": "Link copied",
+            "copyFailed": "Your browser blocked copying. Try again.",
+            "delete": "Delete {name}",
+            "emptyTitle": "Start your image library",
+            "emptyBody": "Drop images above or select files to upload.",
+            "noMatchTitle": "No images match",
+            "noMatchBody": "Try another name or source.",
+            "uploaded": "{name} uploaded",
+            "uploadFailed": "{name}: {error}",
+            "wrongType": "{name} isn't a {types} file.",
+            "tooBig": "{name} is larger than {size}.",
+            "cancelUpload": "Cancel upload of {name}",
+            "retry": "Retry",
+            "dismiss": "Dismiss",
+            "rescanning": "Looking for new images",
+            "rescanNone": "Every image on disk is already in the library.",
+            "rescanDone": "Images added to the library: {count}",
+            "optimizeConfirm": "Shrink every image larger than 2048px and save it in place? Links to these images keep working. This can't be undone.",
+            "optimizing": "Shrinking images",
+            "optimizeNone": "Every image is already within size.",
+            "optimizeDone": "Images shrunk: {count}. Space saved: {size}.",
+            "deleteConfirm": "Delete this image? This can't be undone.",
+            "deleteUsed": "This image is used here:",
+            "deleteLeaves": "Deleting it leaves those spots without an image.",
+            "deleteInBody": "Where it sits inside a post's text, it will show as a broken image.",
+            "deleteAnyway": "Delete anyway?",
+            "error": "Something went wrong. Try again.",
+            "output": "Output: {width} × {height}",
+            "modeConvert": "Converting the format saves a new image, so existing links keep working.",
+            "modeOverwrite": "Replaces the file in place. Posts using it update automatically.",
+            "modeNew": "Adds a new image to the library. The original stays as it is.",
+            "notUsed": "Not used anywhere yet",
+            "usedIn": "Places it's used: {count}",
+            "nameRequired": "Enter a name for the image.",
+            "select": "Select {name}",
+            "selection": "{count}/{shown} selected · {size}",
+            "bulkDeleteConfirm": "Delete the selected images ({count})? This can't be undone.",
+            "bulkDeleteUsed": "Some of the selected images are used here:",
+            "bulkDeleted": "Images deleted: {count}",
+            "tooMany": "Select at most {max} images at a time.",
+            "options": "Options for {name}",
+            "deleted": "Image deleted",
+            "detailsSaved": "Details saved",
+            "imageUpdated": "Image updated",
+            "imageAdded": "Saved as a new image"
+        },
+        "selection": {
+            "selectAll": "Select all shown images",
+            "download": "Download",
+            "delete": "Delete"
+        },
+        "sheet": {
+            "title": "Image options",
+            "edit": "Edit",
+            "download": "Download",
+            "copy": "Copy link",
+            "delete": "Delete"
         }
     }
 }

@@ -13,7 +13,7 @@ use Tests\Factories\UserFactory;
 
 /**
  * Blog settings: new blogs publish comments instantly, status changes come from the
- * shared action bar, and the address is shown read only.
+ * shared action bar, and the address cannot be edited.
  */
 beforeEach(function () {
     if ($this->db->getConnection()->inTransaction()) {
@@ -64,7 +64,6 @@ beforeEach(function () {
             'name' => 'Settings test',
             'description' => '',
             'locale' => 'en',
-            'timezone' => 'UTC',
         ], [(string) $blog['id']]);
     };
 });
@@ -107,7 +106,7 @@ it('ignores an unknown intent and leaves the blog as it was', function () {
     expect($this->blogs->find((int) $blog['id'])['status'])->toBe('draft');
 });
 
-it('shows the blog address and no editable slug', function () {
+it('offers no editable slug and renders through the shared action bar', function () {
     $blog = ($this->newBlog)();
     $viewer = new class() implements TemplateViewerInterface
     {
@@ -143,10 +142,17 @@ it('shows the blog address and no editable slug', function () {
 
     $view = file_get_contents(ROOT_PATH.'/views/areas/dashboard/Blog/settings.lex.php');
 
-    expect($captured['blogUrl'])->toBe(base_url().'/blog/'.$blog['blog_slug'])
-        ->and($view)->not->toContain('name="slug"')
+    expect($view)->not->toContain('name="slug"')
         ->and($view)->toContain('partials/dashboard/_action_bar.lex.php')
         ->and($captured['actions']['primary']['intent'])->toBe('publish');
+});
+
+it('returns to the settings page after saving, whatever the form carries', function () {
+    $blog = ($this->newBlog)();
+
+    $response = ($this->save)($blog, ['active_section' => 'seo']);
+
+    expect($response->getHeader('Location'))->toEndWith('/dashboard/blog/'.$blog['id'].'/settings');
 });
 
 it('keeps the status when the form is submitted without a button', function () {

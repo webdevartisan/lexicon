@@ -334,26 +334,6 @@
 })();
 
 (function () {
-    var target = document.querySelector('.lx-explore-head') || document.querySelector('.lx-explore-toolbar');
-    if (!target) return;
-
-    var params = new URLSearchParams(window.location.search);
-    if (!params.has('tab') && !params.has('q') && !params.has('page')) return;
-
-    function scrollToTarget() {
-        var nav = document.querySelector('.lx-nav');
-        var navH = nav ? nav.offsetHeight : 0;
-        var y = target.getBoundingClientRect().top + window.scrollY - navH - 16;
-        // 'instant' beats html { scroll-behavior: smooth }; 'auto' inherits it.
-        window.scrollTo({ top: Math.max(0, y), behavior: 'instant' });
-    }
-
-    window.requestAnimationFrame(scrollToTarget);
-    // Re-run after fonts / images finish loading; late reflow can shift the target.
-    window.addEventListener('load', scrollToTarget);
-})();
-
-(function () {
     var clear = document.querySelector('.lx-search-field-clear');
     var input = document.querySelector('.lx-search-field input[type="search"]');
     if (!input || !clear) return;
@@ -385,6 +365,9 @@
         var cloneFirst = realSlides[0].cloneNode(true);
         cloneLast.setAttribute('aria-hidden', 'true');
         cloneFirst.setAttribute('aria-hidden', 'true');
+        // Clones carry real links; inert keeps Tab from landing on a copy the reader cannot see
+        cloneLast.inert = true;
+        cloneFirst.inert = true;
         cloneLast.setAttribute('data-slider-clone', 'true');
         cloneFirst.setAttribute('data-slider-clone', 'true');
         rail.insertBefore(cloneLast, realSlides[0]);
@@ -400,12 +383,13 @@
         var isLooping = false;
 
         var dots = [];
+        var dotLabel = root.getAttribute('data-slider-dot-label') || '{n} / {total}';
         if (dotsWrap) {
             for (var i = 0; i < realCount; i++) {
                 var dot = document.createElement('button');
                 dot.type = 'button';
                 dot.className = 'lx-slider-dot';
-                dot.setAttribute('aria-label', 'Slide ' + (i + 1) + ' of ' + realCount);
+                dot.setAttribute('aria-label', dotLabel.replace('{n}', i + 1).replace('{total}', realCount));
                 (function (idx) {
                     dot.addEventListener('click', function () { jumpTo(idx); });
                 })(i);

@@ -8,6 +8,7 @@ use App\Models\MediaModel;
 use App\Models\PostArchiveModel;
 use App\Resources\BlogResource;
 use App\Services\UploadService;
+use Framework\Modules\ModuleDuties;
 use RuntimeException;
 use ZipArchive;
 
@@ -42,6 +43,7 @@ final class BlogArchiveExporter
         private PostArchiveModel $posts,
         private MediaModel $media,
         private ArchiveMediaUrls $urls,
+        private ModuleDuties $moduleDuties,
         private string $storageRoot = ROOT_PATH.'/storage',
     ) {}
 
@@ -71,7 +73,8 @@ final class BlogArchiveExporter
 
             $this->zip->addFile($postsFile, ArchiveFormat::POSTS);
             $this->addJson(ArchiveFormat::MEDIA, array_values($this->mediaEntries));
-            $this->addJson(ArchiveFormat::MANIFEST, $this->manifest($blog, $count, $moderated));
+            $modules = $this->writeModules($blogId);
+            $this->addJson(ArchiveFormat::MANIFEST, $this->manifest($blog, $count, $moderated, $modules));
 
             if (!$this->zip->close()) {
                 throw new RuntimeException('Could not finish writing the archive: '.$this->zip->getStatusString());
@@ -146,7 +149,7 @@ final class BlogArchiveExporter
     }
 
     /**
-     * One post as the archive carries it: no database ids, local media as archive paths.
+     * One post as the archive carries it: an archive id instead of database links, local media as archive paths.
      *
      * @param  array<string, mixed>  $row
      * @param  list<array{name: string, slug: string}>  $tags
@@ -182,6 +185,8 @@ final class BlogArchiveExporter
             : null;
         $post['tags'] = $tags;
         $post['author_name'] = (string) ($row['author_name'] ?? '');
+        // Only a reference inside this archive, so module rows can find their post again on restore
+        $post['archive_id'] = (int) $row['id'];
 
         return $post;
     }
@@ -271,9 +276,10 @@ final class BlogArchiveExporter
 
     /**
      * @param  list<array{title: string, slug: string}>  $moderated
+     * @param  list<string>  $modules  Modules whose rows sit under modules/
      * @return array<string, mixed>
      */
-    private function manifest(BlogResource $blog, int $count, array $moderated): array
+    private function manifest(BlogResource $blog, int $count, array $moderated, array $modules): array
     {
         $blogRow = $blog->toArray();
 
@@ -285,7 +291,23 @@ final class BlogArchiveExporter
             'counts' => ['posts' => $count, 'media' => count($this->mediaEntries)],
             'warnings' => $this->warnings,
             'skipped_moderated' => $moderated,
+            'modules' => $modules,
         ];
+    }
+
+    /**
+     * One file per module that holds rows for the blog.
+     *
+     * @return list<string> Keys of the modules written
+     */
+    private function writeModules(int $blogId): array
+    {
+        $modules = $this->moduleDuties->exportBlog($blogId);
+        foreach ($modules as $key => $data) {
+            $this->addJson(ArchiveFormat::modulePath($key), $data);
+        }
+
+        return array_keys($modules);
     }
 
     /**

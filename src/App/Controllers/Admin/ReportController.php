@@ -255,7 +255,7 @@ class ReportController extends AppController
         $blogId = (int) $case['blog_id'];
         $postId = $case['subject_type'] === 'post' ? (int) $case['subject_id'] : (int) ($case['comment_post_id'] ?? 0);
         $scope = $postId > 0 ? AnalyticsScope::post($blogId, $postId) : AnalyticsScope::blog($blogId);
-        $today = (new DateTimeImmutable('today', new \DateTimeZone(blog_timezone($blogId))))->format('Y-m-d');
+        $today = (new DateTimeImmutable('today', new \DateTimeZone('UTC')))->format('Y-m-d');
         $pace = $this->analytics->pace($scope, $today, AnalyticsReportService::USUAL_DAYS);
 
         return $pace + ['spiking' => AnalyticsReportService::isSpike($pace['today'], $pace['usual'], 30)];

@@ -13,6 +13,7 @@ use Framework\Interfaces\TranslatorInterface;
  * A key written as "offset::nav.home" belongs to a theme. Themes keep their own text in
  * themes/{name}/locales/{locale}.json so a theme stays self-contained, and a theme string
  * that is missing falls back to that theme's English, never to the platform files.
+ * A module key reads the same way from modules/{key}/locales/{locale}.json.
  */
 class TranslationService implements TranslatorInterface
 {
@@ -22,7 +23,11 @@ class TranslationService implements TranslatorInterface
     /** @var array<string,mixed> English strings, loaded only when locale !== 'en'. */
     private array $fallback = [];
 
-    /** @var array<string, array{0: array<string,mixed>, 1: array<string,mixed>}> Theme strings and their English, by theme. */
+    /**
+     * Theme or module strings and their English, by name.
+     *
+     * @var array<string, array{0: array<string,mixed>, 1: array<string,mixed>}>
+     */
     private array $themes = [];
 
     /** @var string Separator used to split a path like "sidebar.menu.title" into segments. */
@@ -33,9 +38,14 @@ class TranslationService implements TranslatorInterface
     /**
      * Constructor: reads locales/{locale}.json and decodes it to an associative array.
      * Keeping all strings in JSON files helps isolate content from code for easier localization.
+     *
+     * @param  string  $modulesPath  Folder holding the modules, read for "<key>::" keys
      */
-    public function __construct(string $locale, string $separator = '.')
-    {
+    public function __construct(
+        string $locale,
+        string $separator = '.',
+        private string $modulesPath = ROOT_PATH.'/modules'
+    ) {
         $this->separator = $separator;
         $this->locale = $locale;
         $this->translations = $this->readJson(ROOT_PATH.'/locales/'.$locale.'.json');
@@ -75,7 +85,8 @@ class TranslationService implements TranslatorInterface
                 if (env('APP_DEBUG')) {
                     // error_log is the idiom already used in CacheMiddleware; a
                     // logger for one call site would be overkill.
-                    error_log('i18n miss, fell back to en: '.(is_array($fullKey) ? implode($this->separator, $fullKey) : $fullKey));
+                    $shown = is_array($fullKey) ? implode($this->separator, $fullKey) : $fullKey;
+                    error_log('i18n miss, fell back to en: '.$shown);
                 }
                 $value = $fallbackValue;
             }
@@ -96,9 +107,10 @@ class TranslationService implements TranslatorInterface
     }
 
     /**
-     * A theme's strings for this locale and its English, read once per theme.
+     * A theme's or module's strings for this locale and its English, read once per name.
+     * A module folder wins over a theme of the same name.
      *
-     * @param  string  $theme  Theme directory name, from the part of the key before "::"
+     * @param  string  $theme  Theme directory name or module key, from the part of the key before "::"
      * @return array{0: array<string,mixed>, 1: array<string,mixed>} Strings, then the English fallback
      */
     private function themeStrings(string $theme): array
@@ -108,7 +120,8 @@ class TranslationService implements TranslatorInterface
             return [[], []];
         }
 
-        $dir = ROOT_PATH.'/themes/'.$theme.'/locales/';
+        $moduleDir = $this->modulesPath.'/'.$theme.'/locales/';
+        $dir = is_dir($moduleDir) ? $moduleDir : ROOT_PATH.'/themes/'.$theme.'/locales/';
 
         return $this->themes[$theme] ??= [
             $this->readJson($dir.$this->locale.'.json'),

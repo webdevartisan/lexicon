@@ -56,6 +56,8 @@ final class PostTranslationController extends AppController
         // Explicit path: the dispatcher lowercases route controller names, so
         // inference would look in "Posttranslation/", which breaks on case-sensitive filesystems.
         return $this->view('areas/dashboard/PostTranslation/edit.lex.php', [
+            // The editor's own bar stands in for the page heading.
+            'noBreadcrumb' => true,
             'post' => $post->toArray(),
             'blog' => $blog,
             'locale' => $locale,

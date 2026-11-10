@@ -18,15 +18,24 @@ use Exception;
 use Framework\Core\Response;
 
 /**
- * Public identity on the front: name, bio, avatar, public profile URL, social
- * links. The private preferences live in AccountPreferencesController and
- * credentials in AccountSecurityController.
+ * Public identity on the front: name and tag, bio, avatar, social links.
+ * Preferences, including whether the profile is public, live in
+ * AccountPreferencesController and credentials in AccountSecurityController.
  *
  * Moved out of the dashboard: settings belong to the person, not to a blog, so
  * they live on the front for every account whatever its role.
  */
 final class AccountProfileController extends AppController
 {
+    /**
+     * The page each section's form lives on, which is where its save returns.
+     */
+    private const SECTION_PAGES = [
+        'profile' => '/account/profile',
+        'name' => '/account/name',
+        'social' => '/account/social',
+    ];
+
     public function __construct(
         private UserModel $users,
         private UserProfileModel $profiles,
@@ -61,13 +70,13 @@ final class AccountProfileController extends AppController
     }
 
     /**
-     * Display the public page settings: tag, display name and visibility.
+     * Display the name and tag form.
      */
-    public function editPublic(): Response
+    public function editName(): Response
     {
         $userId = (int) auth()->user()['id'];
 
-        return $this->view('public.Account.public', [
+        return $this->view('public.Account.name', [
             'user' => $this->loadIdentity($userId),
             'profileUrlPrefix' => rtrim(base_url(), '/').lurl('/profile').'/',
         ]);
@@ -84,8 +93,8 @@ final class AccountProfileController extends AppController
     }
 
     /**
-     * Persist one section of the identity: profile, public page or social links.
-     * Each tab posts only its own fields, so a save never clears the others.
+     * Persist one section of the account: profile, name and tag, or social links.
+     * Each page posts only its own fields, so a save never clears the others.
      */
     public function update(): Response
     {
@@ -93,28 +102,10 @@ final class AccountProfileController extends AppController
         csrf()->assertValid($this->request->postParam('_token'));
 
         $section = (string) $this->request->postParam('section');
-        $section = in_array($section, ['profile', 'public', 'social'], true) ? $section : 'profile';
-        $back = lurl('/account/'.$section);
+        $section = array_key_exists($section, self::SECTION_PAGES) ? $section : 'profile';
+        $back = lurl(self::SECTION_PAGES[$section]);
 
-        $rules = match ($section) {
-            'public' => ['handle' => 'required|user_handle|min:2|max:50'],
-            'social' => [
-                'website' => 'url',
-                'twitter' => 'url',
-                'instagram' => 'url',
-                'linkedin' => 'url',
-                'github' => 'url',
-            ],
-            default => [
-                'first_name' => 'required|name|min:2|max:50',
-                'last_name' => 'required|name|min:2|max:50',
-                'bio' => 'max:1000',
-                'occupation' => 'max:100',
-                'location' => 'max:100',
-            ],
-        };
-
-        $validator = $this->validateOrFail($rules, [
+        $validator = $this->validateOrFail($this->rulesFor($section), [
             'handle.user_handle' => 'A tag may only contain lowercase letters, numbers, and single hyphens.',
         ]);
         $validated = $validator->validated();
@@ -122,13 +113,10 @@ final class AccountProfileController extends AppController
         $userId = (int) auth()->user()['id'];
         $user = auth()->user();
         $currentHandle = (string) $user['handle'];
-        $identityMoved = false;
 
-        if ($section === 'public') {
-            $handleInput = $validated['handle'];
-
+        if ($section === 'name') {
             // An unchanged tag is not re-checked, so one claimed before its word was reserved stays usable.
-            $handleRejection = $handleInput === $currentHandle ? null : $this->handleRejection($handleInput, $userId);
+            $handleRejection = $validated['handle'] === $currentHandle ? null : $this->handleRejection($validated['handle'], $userId);
 
             if ($handleRejection !== null) {
                 $this->session->set('_errors', ['handle' => [$handleRejection]]);
@@ -137,59 +125,13 @@ final class AccountProfileController extends AppController
 
                 return $this->redirect($back);
             }
-
-            $userUpdate = changedFields(['handle' => $handleInput], $user);
-            if (!empty($userUpdate)) {
-                $this->users->updateById($userId, $userUpdate);
-            }
-
-            $profileData = changedFields(['is_public' => $this->request->postParam('is_public') ? 1 : 0], $this->profiles->findOrCreate($userId));
-            if (!empty($profileData)) {
-                $this->profiles->upsert($userId, $profileData);
-            }
-
-            $identityMoved = array_key_exists('is_public', $profileData) || array_key_exists('handle', $userUpdate);
-
-            // Must be written before the recompute below, which re-reads it.
-            $this->prefs->upsert($userId, [
-                'display_name_preference' => $this->request->postParam('show_name') ? 'name' : 'handle',
-            ]);
         }
 
-        if ($section === 'profile') {
-            $userUpdate = changedFields([
-                'first_name' => $validated['first_name'] ?? '',
-                'last_name' => $validated['last_name'] ?? '',
-            ], $user);
-
-            if (!empty($userUpdate)) {
-                $this->users->updateById($userId, $userUpdate);
-            }
-
-            $profileData = changedFields([
-                'bio' => $validated['bio'] ?? '',
-                'occupation' => $validated['occupation'] ?? '',
-                'location' => $validated['location'] ?? '',
-            ], $this->profiles->findOrCreate($userId));
-
-            if (!empty($profileData)) {
-                $this->profiles->upsert($userId, $profileData);
-            }
-        }
-
-        if ($section === 'social') {
-            $socialData = changedFields([
-                'website' => $validated['website'] ?? '',
-                'twitter' => $validated['twitter'] ?? '',
-                'instagram' => $validated['instagram'] ?? '',
-                'linkedin' => $validated['linkedin'] ?? '',
-                'github' => $validated['github'] ?? '',
-            ], $this->socials->getKeyValueArrayLinks($userId));
-
-            foreach ($socialData as $network => $url) {
-                $this->socials->upsertLink($userId, $network, $url);
-            }
-        }
+        $identityMoved = match ($section) {
+            'name' => $this->saveName($userId, $user, $validated),
+            'social' => $this->saveSocial($userId, $validated),
+            default => $this->saveProfile($userId, $validated),
+        };
 
         // a name change moves the cached display name when the preference is 'name'
         $newDisplayName = $this->displayNames->refreshCached($userId);
@@ -205,6 +147,103 @@ final class AccountProfileController extends AppController
         $this->flash('success', chrome_translate('account.flash.profileSaved'));
 
         return $this->redirect($back);
+    }
+
+    /**
+     * Validation rules for the fields one section posts.
+     *
+     * @return array<string, string>
+     */
+    private function rulesFor(string $section): array
+    {
+        return match ($section) {
+            'name' => [
+                'first_name' => 'required|name|min:2|max:50',
+                'last_name' => 'required|name|min:2|max:50',
+                'handle' => 'required|user_handle|min:2|max:50',
+            ],
+            'social' => [
+                'website' => 'url',
+                'twitter' => 'url',
+                'instagram' => 'url',
+                'linkedin' => 'url',
+                'github' => 'url',
+            ],
+            default => [
+                'bio' => 'max:1000',
+                'occupation' => 'max:100',
+                'location' => 'max:100',
+            ],
+        };
+    }
+
+    /**
+     * Save first and last name, the tag, and whether readers see the name beside it.
+     *
+     * @param  array<string, mixed>  $user  The signed-in user row
+     * @param  array<string, mixed>  $validated
+     * @return bool Whether the tag, and so the public address, changed
+     */
+    private function saveName(int $userId, array $user, array $validated): bool
+    {
+        $userUpdate = changedFields([
+            'first_name' => $validated['first_name'] ?? '',
+            'last_name' => $validated['last_name'] ?? '',
+            'handle' => $validated['handle'],
+        ], $user);
+
+        if (!empty($userUpdate)) {
+            $this->users->updateById($userId, $userUpdate);
+        }
+
+        // Must be written before the display name is recomputed, which re-reads it.
+        $this->prefs->upsert($userId, [
+            'display_name_preference' => $this->request->postParam('show_name') ? 'name' : 'handle',
+        ]);
+
+        return array_key_exists('handle', $userUpdate);
+    }
+
+    /**
+     * Save the about fields: bio, occupation and location.
+     *
+     * @param  array<string, mixed>  $validated
+     */
+    private function saveProfile(int $userId, array $validated): bool
+    {
+        $profileData = changedFields([
+            'bio' => $validated['bio'] ?? '',
+            'occupation' => $validated['occupation'] ?? '',
+            'location' => $validated['location'] ?? '',
+        ], $this->profiles->findOrCreate($userId));
+
+        if (!empty($profileData)) {
+            $this->profiles->upsert($userId, $profileData);
+        }
+
+        return false;
+    }
+
+    /**
+     * Save the five social links.
+     *
+     * @param  array<string, mixed>  $validated
+     */
+    private function saveSocial(int $userId, array $validated): bool
+    {
+        $socialData = changedFields([
+            'website' => $validated['website'] ?? '',
+            'twitter' => $validated['twitter'] ?? '',
+            'instagram' => $validated['instagram'] ?? '',
+            'linkedin' => $validated['linkedin'] ?? '',
+            'github' => $validated['github'] ?? '',
+        ], $this->socials->getKeyValueArrayLinks($userId));
+
+        foreach ($socialData as $network => $url) {
+            $this->socials->upsertLink($userId, $network, $url);
+        }
+
+        return false;
     }
 
     /**

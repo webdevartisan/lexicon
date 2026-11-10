@@ -10,6 +10,7 @@ module.exports = {
   content: [
     "./views/**/*.lex.php",
     "./views/**/*.php",
+    "./modules/*/views/**/*.php",
     "./public/cp-assets/js/**/*.js",
   ],
 

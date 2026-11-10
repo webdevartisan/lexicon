@@ -6,6 +6,15 @@
 
 :root {
   --post-accent: var(--blaze-deep);
+  /* Module tokens: the only names optional modules read, so they match every theme. */
+  --module-accent: var(--post-accent);
+  --module-ink: var(--spruce);
+  --module-muted: var(--moss);
+  --module-surface: var(--chart);
+  --module-rule: var(--rule);
+  --module-font: var(--serif);
+  --module-mono: var(--mono);
+  --module-map-flavor: light;
   --chart: #f3f5ee;
   --panel: #e9edde;
   --spruce: #1c2620;

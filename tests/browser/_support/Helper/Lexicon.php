@@ -63,6 +63,33 @@ class Lexicon extends Module
     }
 
     /**
+     * Slow uploads to the given bytes per second until backOnAFastConnection().
+     */
+    public function onASlowConnection(int $bytesPerSecond = 2000): void
+    {
+        $this->sendToChrome('Network.enable');
+        $this->sendToChrome('Network.emulateNetworkConditions', [
+            'offline' => false,
+            'latency' => 0,
+            'downloadThroughput' => -1,
+            'uploadThroughput' => $bytesPerSecond,
+        ]);
+    }
+
+    /**
+     * Lift the limit onASlowConnection() put on uploads.
+     */
+    public function backOnAFastConnection(): void
+    {
+        $this->sendToChrome('Network.emulateNetworkConditions', [
+            'offline' => false,
+            'latency' => 0,
+            'downloadThroughput' => -1,
+            'uploadThroughput' => -1,
+        ]);
+    }
+
+    /**
      * Reject all cookies if the banner is up, and wait out the reload it causes.
      */
     public function declineCookies(): void
@@ -113,18 +140,6 @@ class Lexicon extends Module
     }
 
     /**
-     * Open the media library's upload panel unless it already shows, as it does on an empty library.
-     * Upload messages appear inside it, so a closed panel hides them.
-     */
-    public function openTheMediaUploader(): void
-    {
-        $browser = $this->browser();
-        if ($browser->executeJS("return document.getElementById('media-upload-panel').classList.contains('hidden')")) {
-            $browser->click('#media-upload-toggle');
-        }
-    }
-
-    /**
      * Write the first words of a new post into its still empty editor.
      */
     public function writeInTheEmptyEditor(string $text): void
@@ -136,6 +151,52 @@ class Lexicon extends Module
         $browser->click('#tinymce');
         $browser->type($text);
         $browser->switchToIFrame();
+    }
+
+    /**
+     * Open one of the post editor's dialogs (postLinkDialog, postOrganizeDialog, ...) through
+     * whichever of its buttons is on screen.
+     */
+    public function openEditorDialog(string $id): void
+    {
+        $browser = $this->browser();
+        $browser->executeJS(
+            "Array.prototype.filter.call(document.querySelectorAll('[data-modal-target=\"{$id}\"]'), function (el) {"
+            .' return el.offsetParent !== null; })[0].click();'
+        );
+        $browser->waitForElementVisible("#{$id} [data-modal-close]");
+    }
+
+    /**
+     * Close a post editor dialog with its own button.
+     */
+    public function closeEditorDialog(string $id): void
+    {
+        $browser = $this->browser();
+        $browser->click("#{$id} [data-modal-close]");
+        $browser->waitForElementNotVisible("#{$id} [data-modal-close]");
+    }
+
+    /**
+     * Press the editor's publish button and confirm in the check it opens. The same
+     * two presses schedule the post when a later date is set.
+     */
+    public function publishFromTheEditor(): void
+    {
+        $browser = $this->browser();
+        $browser->click('[data-publish-check]');
+        $browser->waitForElementVisible('#postPublishDialog button[name=intent]');
+        $browser->click('#postPublishDialog button[name=intent]');
+    }
+
+    /**
+     * Choose "Delete post" from the editor's "More actions" menu. The confirmation comes next.
+     */
+    public function deleteFromTheEditor(): void
+    {
+        $browser = $this->browser();
+        $browser->click('summary[title="More actions"]');
+        $browser->click('Delete post');
     }
 
     /**

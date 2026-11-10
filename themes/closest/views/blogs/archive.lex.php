@@ -70,9 +70,8 @@ $blogTitle = e($blog['blog_name'] ?? 'Closest');
             $minutes = reading_time($post['content'] ?? '');
             $n = $first + $i;
 
-            $tz = blog_timezone((int) ($blog['id'] ?? 0));
-            $date = e(local_datetime($post['published_at'] ?? null, 'j M Y', $tz));
-            $year = local_datetime($post['published_at'] ?? null, 'Y', $tz);
+            $date = reader_date($post['published_at'] ?? null, 'j M Y');
+            $year = local_datetime($post['published_at'] ?? null, 'Y', 'UTC');
             ?>
           <?php if ($year !== '' && $year !== $lastYear) {
               $lastYear = $year;

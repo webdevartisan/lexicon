@@ -24,9 +24,7 @@ $I->checkOption('#workflow_enabled');
 $I->click('button[data-actionbar-primary]');
 $I->waitForText('Blog updated');
 $I->amOnPage("{$blog}/team");
-$I->fillField('input[type=email][name=email]', $readerEmail);
-$I->chooseFromMenu('#invite-role', 'Contributor');
-$I->click('Send invite');
+$I->inviteToTeam($readerEmail, 'Contributor');
 $I->waitForText("Invitation sent to {$readerEmail}");
 $I->seeThePageLooksRight('50-reader-invited');
 
@@ -80,6 +78,13 @@ $I->amOnPage("{$blog}/review-queue");
 $I->see($straight);
 $I->see($viaDraft);
 $I->seeThePageLooksRight('53-review-queue');
+
+// The team page points at the queue while posts wait without a reviewer
+$I->amOnPage("{$blog}/team");
+$I->see('Posts in review without a reviewer:');
+$I->seeThePageLooksRight('53-team-review-alert');
+$I->click('.bg-amber-50 a');
+$I->seeInCurrentUrl('/review-queue');
 
 // The contributor can keep editing until review starts
 $I->signInAs('reader');
@@ -153,10 +158,11 @@ $I->dontSeeElement('#content_ifr');
 // The writer changes the reader's role, then removes them
 $I->signInAs('writer');
 $I->amOnPage("{$blog}/team");
-$I->chooseFromMenu('form[action$="/role"] select', 'Author');
+$I->changeTeamRole('Author');
 $I->waitForText('Role updated');
-$I->seeOptionIsSelected('form[action$="/role"] select', 'Author');
-$I->click('Remove', 'form[action$="/revoke"]');
+$I->see('Author', 'tbody');
+$I->click('//tr//button[@data-row-actions-toggle]');
+$I->click('Remove', '//tr//*[@data-row-actions-menu]');
 $I->acceptConfirm();
 $I->waitForText('Collaborator access revoked');
 $I->dontSeeElement('form[action$="/revoke"]');
@@ -169,14 +175,12 @@ $I->seeInTitle('Access denied');
 $nobody = "walk-nobody-{$stamp}@example.test";
 $I->signInAs('writer');
 $I->amOnPage("{$blog}/team");
-$I->fillField('input[type=email][name=email]', $nobody);
-$I->chooseFromMenu('#invite-role', 'Author');
-$I->click('Send invite');
+$I->inviteToTeam($nobody, 'Author');
 $I->waitForText("Invitation sent to {$nobody}");
 $I->see($nobody);
-$cancel = "//form[contains(@action, 'cancel-invite')][input[@value='{$nobody}']]//button";
-$I->scrollDownTo($cancel);
-$I->click($cancel);
+$row = "//tr[.//p[normalize-space()='{$nobody}']]";
+$I->click("{$row}//button[@data-row-actions-toggle]");
+$I->click('Cancel invite', "{$row}//*[@data-row-actions-menu]");
 $I->waitForText('Invitation cancelled');
 $I->dontSee($nobody);
 $I->seeThePageLooksRight('59-invitation-cancelled');

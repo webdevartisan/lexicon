@@ -16,6 +16,9 @@ use UnexpectedValueException;
 
 final class Dispatcher implements RequestHandlerInterface
 {
+    /** Namespaces a route may name with controller_class. */
+    private const MODULE_NAMESPACES = ['Modules\\', 'Tests\\Fixtures\\Modules\\'];
+
     /** @var array<string, mixed> */
     private array $middlewareConfig;
 
@@ -134,6 +137,10 @@ final class Dispatcher implements RequestHandlerInterface
      */
     private function getControllerName(array $params): string
     {
+        if (isset($params['controller_class'])) {
+            return $this->moduleControllerName((string) $params['controller_class']);
+        }
+
         $controller = $params['controller'] ?? '';
         $controller = $this->normalizeControllerName($controller);
 
@@ -143,6 +150,21 @@ final class Dispatcher implements RequestHandlerInterface
         }
 
         return $namespace.'\\'.$controller;
+    }
+
+    /**
+     * Module routes name their controller in full, but only inside the module namespaces,
+     * so a module route can never reach a core controller.
+     */
+    private function moduleControllerName(string $class): string
+    {
+        foreach (self::MODULE_NAMESPACES as $namespace) {
+            if (str_starts_with($class, $namespace)) {
+                return $class;
+            }
+        }
+
+        throw new PageNotFoundException("Controller {$class} is outside the module namespaces");
     }
 
     /**

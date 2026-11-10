@@ -1,5 +1,5 @@
 {% extends "back.lex.php" %}
-{% block title %}Categories & Tags{% endblock %}
+{% block title %}{{ t('navigation.categoriesTags') }}{% endblock %}
 {% block subtitle %}<span class="hidden sm:inline">Organise this blog's posts. Both are optional, so use what helps.</span>{% endblock %}
 {% block body %}
 <?php

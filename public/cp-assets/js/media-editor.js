@@ -4,14 +4,15 @@
  * or delete it. It lives in the shared modal (components/modal, bare) and is driven
  * by Cropper.js.
  *
- * media-library.js builds it and hands in the request helper and the grid updates,
- * so the editor never reaches into the grid itself.
- *
- * @param {object} deps api, esc, humanSize, versioned, displayName, showCard, deleteItem, confirmDelete
+ * @param {object} deps api, route, t, sources, notify, esc, humanSize, versioned, displayName, showCard, deleteItem, confirmDelete
  * @returns {{open: function(string|number, Element=): void}}
  */
 window.createMediaEditor = function (deps) {
     var api = deps.api;
+    var route = deps.route;
+    var t = deps.t;
+    var sources = deps.sources || {};
+    var notify = deps.notify;
     var esc = deps.esc;
     var humanSize = deps.humanSize;
     var versioned = deps.versioned;
@@ -101,7 +102,7 @@ window.createMediaEditor = function (deps) {
     function updateEstimate() {
         if (!cropper) return;
         var size = outputSize();
-        var label = 'Output: ' + size.width + ' × ' + size.height;
+        var label = t('output', { width: size.width, height: size.height });
         output.textContent = label;
 
         var canvas = cropper.getCroppedCanvas({ width: size.width, height: size.height, imageSmoothingQuality: 'high' });
@@ -133,20 +134,20 @@ window.createMediaEditor = function (deps) {
         toggles.mode.querySelector('[data-value="overwrite"]').disabled = converting;
         if (converting) {
             press('mode', 'new');
-            modeHint.textContent = 'Converting the format saves a new image so existing links keep working.';
+            modeHint.textContent = t('modeConvert');
         } else if (pressed('mode') === 'overwrite') {
-            modeHint.textContent = 'Replaces the file in place; posts using it update automatically.';
+            modeHint.textContent = t('modeOverwrite');
         } else {
-            modeHint.textContent = 'Adds a new image to the library; the original stays as it is.';
+            modeHint.textContent = t('modeNew');
         }
     }
 
     function renderUsage(usages) {
         if (usages.length === 0) {
-            usage.innerHTML = '<p class="font-medium">Not used anywhere yet</p>';
+            usage.innerHTML = '<p class="font-medium">' + esc(t('notUsed')) + '</p>';
             return;
         }
-        usage.innerHTML = '<p class="font-medium mb-1">Used in ' + usages.length + ' place' + (usages.length === 1 ? '' : 's') + '</p>'
+        usage.innerHTML = '<p class="font-medium mb-1">' + esc(t('usedIn', { count: usages.length })) + '</p>'
             + '<ul class="space-y-0.5">' + usages.map(function (use) {
                 var label = use.link
                     ? '<a href="' + esc(use.link) + '" target="_blank" rel="noopener" class="text-custom-500 hover:underline">' + esc(use.label) + '</a>'
@@ -194,26 +195,38 @@ window.createMediaEditor = function (deps) {
             (item.width || '?') + ' × ' + (item.height || '?'),
             humanSize(item.size_bytes),
             extension(item).toUpperCase(),
-            item.source,
+            sources[item.source] || item.source,
         ].filter(Boolean).join(' · ');
         renderUsage(item.usages || []);
         output.textContent = '';
         setStatus('');
         syncMode();
+        showTab('details');
         startCropper(item.url);
     }
+
+    function showTab(name) {
+        form.setAttribute('data-tab', name);
+        form.querySelectorAll('[data-editor-tab]').forEach(function (button) {
+            button.setAttribute('aria-pressed', button.getAttribute('data-editor-tab') === name ? 'true' : 'false');
+        });
+    }
+
+    form.querySelectorAll('[data-editor-tab]').forEach(function (button) {
+        button.addEventListener('click', function () { showTab(button.getAttribute('data-editor-tab')); });
+    });
 
     // Ignores clicks while a previous image is still loading its details
     function openEditor(id, trigger) {
         if (opening) return;
         opening = true;
 
-        api('/' + id + '/details')
+        api(route('details', id))
             .then(function (item) {
                 fill(item);
                 cpModal.open('media-editor', trigger);
             })
-            .catch(function (error) { window.alert(error.message); })
+            .catch(function (error) { notify(error.message, 'error'); })
             .finally(function () { opening = false; });
     }
 
@@ -260,14 +273,15 @@ window.createMediaEditor = function (deps) {
     detailsButton.addEventListener('click', function () {
         var name = nameInput.value.trim();
         if (!name) {
-            setStatus('The name cannot be empty.');
+            setStatus(t('nameRequired'));
             return;
         }
 
         var item = current;
-        whileSaving(detailsButton, api('/' + item.id + '/meta', { name: name, alt_text: altInput.value }).then(function (saved) {
+        whileSaving(detailsButton, api(route('meta', item.id), { name: name, alt_text: altInput.value }).then(function (saved) {
             Object.assign(item, saved);
             showCard(saved);
+            notify(t('detailsSaved'), 'ok');
             if (current !== item) return;
             nameInput.value = displayName(saved);
             altInput.value = saved.alt_text || '';
@@ -298,10 +312,12 @@ window.createMediaEditor = function (deps) {
             format: formatSelect.value || null,
         }, cropFields());
 
-        whileSaving(applyButton, api('/' + current.id + '/process', fields).then(function (item) {
+        var original = current;
+        whileSaving(applyButton, api(route('process', original.id), fields).then(function (item) {
             // An overwrite keeps the URL and the row's old timestamp, so force a fresh thumbnail
             if (mode === 'overwrite') item.updated_at = String(Date.now());
             showCard(item);
+            notify(t(String(item.id) === String(original.id) ? 'imageUpdated' : 'imageAdded'), 'ok');
             cpModal.close('media-editor');
         }));
     });

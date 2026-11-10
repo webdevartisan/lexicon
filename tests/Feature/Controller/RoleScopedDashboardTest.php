@@ -9,8 +9,8 @@ use App\Models\BlogSettingsModel;
 use App\Models\PostModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
+use App\Services\HomeService;
 use App\Services\NavigationService;
-use App\Services\OverviewService;
 use Framework\Core\App;
 use Framework\Exceptions\UnauthorizedException;
 use Framework\Security\Csrf;
@@ -174,7 +174,7 @@ it('refuses post creation to a reviewer', function () {
 it('shows each role only its Overview sections', function (string $role, array $present, array $absent) {
     ($this->signInAs)($role);
 
-    $overview = App::container()->get(OverviewService::class)->for($this->blogs->getBlog($this->blogId), auth()->user());
+    $overview = App::container()->get(HomeService::class)->for($this->blogs->getBlog($this->blogId), auth()->user());
 
     foreach ($present as $section) {
         expect($overview[$section])->not->toBeNull("{$role} should see {$section}");
@@ -183,11 +183,11 @@ it('shows each role only its Overview sections', function (string $role, array $
         expect($overview[$section])->toBeNull("{$role} should not see {$section}");
     }
 })->with([
-    'owner' => ['owner', ['blogPosts', 'comments', 'subscribers', 'review'], ['myWork']],
-    'editor' => ['editor', ['blogPosts', 'comments', 'review'], ['myWork', 'subscribers']],
-    'author' => ['author', ['myWork'], ['blogPosts', 'comments', 'subscribers', 'review']],
-    'contributor' => ['contributor', ['myWork'], ['blogPosts', 'comments', 'subscribers', 'review']],
-    'reviewer' => ['reviewer', ['review'], ['blogPosts', 'myWork', 'comments', 'subscribers']],
+    'owner' => ['owner', ['blogPosts', 'comments', 'subscribers', 'review', 'activity', 'rhythm'], ['myWork']],
+    'editor' => ['editor', ['blogPosts', 'comments', 'review', 'activity', 'rhythm'], ['myWork', 'subscribers']],
+    'author' => ['author', ['myWork', 'rhythm'], ['blogPosts', 'comments', 'subscribers', 'review', 'activity']],
+    'contributor' => ['contributor', ['myWork', 'rhythm'], ['blogPosts', 'comments', 'subscribers', 'review', 'activity']],
+    'reviewer' => ['reviewer', ['review'], ['blogPosts', 'myWork', 'comments', 'subscribers', 'activity', 'rhythm']],
 ]);
 
 it('shows each role only the sidebar items it may use', function (string $role, array $expected) {
@@ -214,7 +214,7 @@ it('treats a custom role by its permissions, not its name', function () {
     );
     ($this->signInAs)($slug);
 
-    $overview = App::container()->get(OverviewService::class)->for($this->blogs->getBlog($this->blogId), auth()->user());
+    $overview = App::container()->get(HomeService::class)->for($this->blogs->getBlog($this->blogId), auth()->user());
 
     expect($overview['review'])->not->toBeNull()
         ->and($overview['blogPosts'])->toBeNull()
@@ -247,7 +247,7 @@ it('counts a post with two reviewers once on the Overview', function () {
     }
     ($this->signInAs)('editor');
 
-    $overview = App::container()->get(OverviewService::class)->for($this->blogs->getBlog($this->blogId), auth()->user());
+    $overview = App::container()->get(HomeService::class)->for($this->blogs->getBlog($this->blogId), auth()->user());
 
     expect($overview['review']['inReview'])->toBe(1)
         ->and($overview['review']['items'])->toHaveCount(1);

@@ -12,12 +12,12 @@ foreach (($cards ?? []) as $i => $post) {
     $title = e($post['title'] ?? 'Untitled');
     $cat = trim((string) ($post['category'] ?? $t('vernissage::home.fallbackCategory')));
     $catSlug = (string) ($post['category_slug'] ?? '');
-    $date = e(local_datetime($post['published_at'] ?? null, 'j M Y', blog_timezone((int) ($blog['id'] ?? 0))));
+    $date = reader_date($post['published_at'] ?? null, 'j M Y');
     $author = author_byline($post['author_name'], $post['author_handle'], $post['author_profile_handle']);
     $minutes = reading_time($post['content'] ?? '');
     $tags = is_array($post['tags'] ?? null) ? $post['tags'] : [];
 
-    $year = local_datetime($post['published_at'] ?? null, 'Y', blog_timezone((int) ($blog['id'] ?? 0))) ?: date('Y');
+    $year = local_datetime($post['published_at'] ?? null, 'Y', 'UTC') ?: date('Y');
     ?>
   <article class="work reveal" data-category="<?= e($catSlug !== '' ? $catSlug : strtolower($cat)) ?>" data-card-link="<?= e($url) ?>">
     <a href="<?= $url ?>" class="frame work-frame" aria-hidden="true" tabindex="-1">

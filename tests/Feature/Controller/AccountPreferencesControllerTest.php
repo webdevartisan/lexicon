@@ -3,11 +3,12 @@
 declare(strict_types=1);
 
 use App\Controllers\AccountPreferencesController;
-use App\Models\PendingEmailChangeModel;
 use App\Models\UserModel;
 use App\Models\UserPreferencesModel;
+use App\Models\UserProfileModel;
 use App\Services\AccountZone;
 use App\Services\LocaleRegistry;
+use App\Services\PublicCacheInvalidator;
 use App\Services\SessionLocaleSync;
 use Framework\Core\App;
 use Framework\Interfaces\TemplateViewerInterface;
@@ -15,9 +16,9 @@ use Framework\Session;
 use Tests\Factories\UserFactory;
 
 /**
- * Preferences now owns only the interface settings. The sign-in address is
- * displayed here but changed through AccountEmailController, so this form must
- * not be able to touch users.email however it is posted to.
+ * Preferences owns the interface settings and profile visibility. The sign-in
+ * address is changed through AccountEmailController, so this form must not be
+ * able to touch users.email however it is posted to.
  */
 beforeEach(function () {
     if ($this->db->getConnection()->inTransaction()) {
@@ -33,7 +34,7 @@ beforeEach(function () {
 
     $this->users = new UserModel($this->db);
     $this->prefs = new UserPreferencesModel($this->db);
-    $this->pending = new PendingEmailChangeModel($this->db);
+    $this->profiles = new UserProfileModel($this->db);
     $this->password = 'password123';
     $this->email = faker()->unique()->safeEmail();
     $this->userId = UserFactory::new($this->users)
@@ -76,11 +77,24 @@ beforeEach(function () {
         return new AccountPreferencesController(
             $this->users,
             $this->prefs,
-            $this->pending,
+            $this->profiles,
             $c->get(LocaleRegistry::class),
             $c->get(SessionLocaleSync::class),
             new AccountZone($this->prefs, $c->get(Session::class)),
+            $c->get(PublicCacheInvalidator::class),
         );
+    };
+
+    $this->savePreferences = function (array $fields) {
+        $controller = ($this->makeController)();
+        $request = makeRequest('/account/preferences/update', 'POST', [
+            '_token' => csrf()->getToken(),
+            'timezone' => 'UTC',
+            'locale' => 'auto',
+        ] + $fields);
+        setupController($controller, $request, $this->viewer);
+
+        return callController($controller, 'update', $request);
     };
 
     $this->reportDeviceZone = function (string $zone) {
@@ -224,6 +238,23 @@ test('saving preferences leaves the display-name preference alone', function () 
     callController($controller, 'update', $request);
 
     expect($this->prefs->findOrCreate($this->userId)['display_name_preference'])->toBe('name');
+});
+
+test('ticking the switch makes the profile public', function () {
+    $this->profiles->upsert($this->userId, ['is_public' => 0]);
+
+    ($this->savePreferences)(['is_public' => '1']);
+
+    expect((int) $this->profiles->findOrCreate($this->userId)['is_public'])->toBe(1);
+});
+
+test('an unticked switch is not posted and hides the profile', function () {
+    $this->profiles->upsert($this->userId, ['is_public' => 1]);
+
+    $response = ($this->savePreferences)([]);
+
+    expect($response->getHeader('Location'))->toContain('/account/preferences')
+        ->and((int) $this->profiles->findOrCreate($this->userId)['is_public'])->toBe(0);
 });
 
 test('switching to the device zone changes only the zone and returns to the page', function () {

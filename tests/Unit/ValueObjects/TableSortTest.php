@@ -44,3 +44,46 @@ test('nothing is pinned unless the page asks for it', function () {
 test('an array sort key cannot fatal the page', function () {
     expect(sortFor(['sort' => ['title'], 'dir' => 'asc'])->orderBy())->toBe('p.id DESC, p.id DESC');
 });
+
+test('it tells a requested order from the default one', function () {
+    expect(sortFor(['sort' => 'title'])->wasRequested())->toBeTrue()
+        ->and(sortFor([])->wasRequested())->toBeFalse()
+        ->and(sortFor(['sort' => 'p.password'])->wasRequested())->toBeFalse()
+        ->and(sortFor(['sort' => ['title']])->wasRequested())->toBeFalse();
+});
+
+function namedSortFor(array $query): TableSort
+{
+    return TableSort::fromRequest(
+        makeRequest('/admin/posts', 'GET', [], $query),
+        ['id' => 'p.id', 'title' => 'p.title'],
+        defaultKey: 'id',
+        defaultDirection: 'desc',
+        named: ['newest' => ['id', 'desc'], 'title' => ['title', 'asc']]
+    );
+}
+
+test('a sort menu name stands for its column and direction', function () {
+    $sort = namedSortFor(['sort' => 'newest']);
+
+    expect($sort->key())->toBe('id')
+        ->and($sort->direction())->toBe('desc')
+        ->and($sort->choice())->toBe('newest')
+        ->and($sort->wasRequested())->toBeTrue();
+});
+
+test('a column header that shares a name with a menu choice keeps its own direction', function () {
+    $sort = namedSortFor(['sort' => 'title', 'dir' => 'desc']);
+
+    expect($sort->key())->toBe('title')
+        ->and($sort->direction())->toBe('desc')
+        ->and($sort->choice())->toBe('');
+});
+
+test('the menu name wins when the column key comes without a direction', function () {
+    expect(namedSortFor(['sort' => 'title'])->direction())->toBe('asc');
+});
+
+test('an order the menu has no name for has no choice', function () {
+    expect(namedSortFor(['sort' => 'id', 'dir' => 'asc'])->choice())->toBe('');
+});

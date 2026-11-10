@@ -117,3 +117,16 @@
     transform: translateX(-0.25rem);
 }
 
+.lx-cites-more {
+    margin: clamp(1.75rem, 3.5vw, 2.75rem) 0 0;
+    text-align: end;
+}
+
+.lx-cites-more:hover span {
+    transform: translateX(0.25rem);
+}
+
+[dir='rtl'] .lx-cites-more:hover span {
+    transform: translateX(-0.25rem);
+}
+

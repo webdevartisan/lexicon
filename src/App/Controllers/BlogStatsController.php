@@ -46,7 +46,7 @@ final class BlogStatsController extends AppController
         }
 
         $preset = (string) ($this->request->get['range'] ?? '30d');
-        $range = AnalyticsRange::fromQuery(['range' => in_array($preset, self::RANGES, true) ? $preset : '30d'], blog_timezone($blogId));
+        $range = AnalyticsRange::fromQuery(['range' => in_array($preset, self::RANGES, true) ? $preset : '30d'], 'UTC');
 
         return $this->view('public.BlogStats.show', [
             'blog' => $blog,

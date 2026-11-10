@@ -277,7 +277,7 @@ $router->group([
 // belonging to a blog stays in the dashboard. No namespace key, so these
 // controllers sit at App\Controllers and resolve by auto-discovery like
 // ReaderController. Deletion keeps its own confirm/destroy pair, reached from
-// the foot of Preferences rather than from the rail.
+// the Delete account item in the rail.
 $router->group([
     'prefix' => '/account',
     'middleware' => ['auth', 'panel'],
@@ -285,7 +285,7 @@ $router->group([
     $r->add('/', ['controller' => 'AccountProfileController', 'action' => 'redirectToProfile', 'method' => 'GET']);
 
     $r->add('/profile', ['controller' => 'AccountProfileController', 'action' => 'edit', 'method' => 'GET']);
-    $r->add('/public', ['controller' => 'AccountProfileController', 'action' => 'editPublic', 'method' => 'GET']);
+    $r->add('/name', ['controller' => 'AccountProfileController', 'action' => 'editName', 'method' => 'GET']);
     $r->add('/social', ['controller' => 'AccountProfileController', 'action' => 'editSocial', 'method' => 'GET']);
     $r->add('/profile/update', ['controller' => 'AccountProfileController', 'action' => 'update', 'method' => 'POST']);
     $r->add('/profile/avatar', ['controller' => 'AccountProfileController', 'action' => 'uploadAvatar', 'method' => 'POST']);
@@ -363,6 +363,11 @@ $router->group([
     $r->add('/blog/{blogId:\d+}/appearance', ['controller' => 'AppearanceController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/blog/{blogId:\d+}/appearance/activate', ['controller' => 'AppearanceController', 'action' => 'activate', 'method' => 'POST']);
     $r->add('/blog/{blogId:\d+}/appearance/update', ['controller' => 'AppearanceController', 'action' => 'update', 'method' => 'POST']);
+
+    // Extras: optional modules a blog switches on for itself
+    $r->add('/blog/{blogId:\d+}/extras', ['controller' => 'ExtrasController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/extras/toggle', ['controller' => 'ExtrasController', 'action' => 'toggle', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/extras/purge', ['controller' => 'ExtrasController', 'action' => 'purge', 'method' => 'POST']);
     $r->add('/blog/{blogId:\d+}/texts', ['controller' => 'BlogTextController', 'action' => 'save', 'method' => 'POST']);
     $r->add('/post', ['controller' => 'PostController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/post/bulk', ['controller' => 'PostController', 'action' => 'bulk', 'method' => 'POST']);
@@ -412,6 +417,8 @@ $router->group([
     $r->add('/blog/{blogId:\d+}/media/{id:\d+}/meta', ['controller' => 'MediaController', 'action' => 'saveMeta', 'method' => 'POST']);
     $r->add('/blog/{blogId:\d+}/media/optimize', ['controller' => 'MediaController', 'action' => 'optimize', 'method' => 'POST']);
     $r->add('/blog/{blogId:\d+}/media/rescan', ['controller' => 'MediaController', 'action' => 'rescan', 'method' => 'POST']);
+    $r->add('/blog/{blogId:\d+}/media/bulk-usages', ['controller' => 'MediaController', 'action' => 'bulkUsages', 'method' => 'GET']);
+    $r->add('/blog/{blogId:\d+}/media/bulk-destroy', ['controller' => 'MediaController', 'action' => 'bulkDestroy', 'method' => 'POST']);
     $r->add('/blog/{blogId:\d+}/media', ['controller' => 'MediaController', 'action' => 'store',   'method' => 'POST']);
     $r->add('/blog/{blogId:\d+}/media/{id:\d+}/destroy', ['controller' => 'MediaController', 'action' => 'destroy', 'method' => 'POST']);
 
@@ -534,6 +541,15 @@ $router->group([
     $r->add('/cache', ['controller' => 'CacheController', 'action' => 'index']);
     $r->add('/cache/prune', ['controller' => 'CacheController', 'action' => 'prune', 'method' => 'POST']);
     $r->add('/cache/clear', ['controller' => 'CacheController', 'action' => 'clear', 'method' => 'POST']);
+    $r->add('/cache/browse', ['controller' => 'CacheController', 'action' => 'browse', 'method' => 'GET']);
+    $r->add('/cache/delete-selected', ['controller' => 'CacheController', 'action' => 'delete-selected', 'method' => 'POST']);
+    $r->add('/cache/delete-selected-compiled', ['controller' => 'CacheController', 'action' => 'delete-selected-compiled', 'method' => 'POST']);
+    $r->add('/cache/preview', ['controller' => 'CacheController', 'action' => 'preview', 'method' => 'GET']);
+    $r->add('/cache/browse-compiled', ['controller' => 'CacheController', 'action' => 'browse-compiled', 'method' => 'GET']);
+    $r->add('/cache/delete-compiled', ['controller' => 'CacheController', 'action' => 'delete-compiled', 'method' => 'POST']);
+    $r->add('/cache/delete-entry', ['controller' => 'CacheController', 'action' => 'delete-entry', 'method' => 'POST']);
+    $r->add('/cache/rebuild-views', ['controller' => 'CacheController', 'action' => 'rebuild-views', 'method' => 'POST']);
+    $r->add('/cache/clear-layer', ['controller' => 'CacheController', 'action' => 'clear-layer', 'method' => 'POST']);
     $r->add('/cache/delete-pattern', ['controller' => 'CacheController', 'action' => 'delete-pattern', 'method' => 'POST']);
 
     $r->add('/rate-limits', ['controller' => 'RateLimitController', 'action' => 'index', 'method' => 'GET']);
@@ -727,6 +743,8 @@ $router->group([
 
     // Recurring tasks. Listed before the id routes so the fixed segments are
     // not swallowed by them.
+    $r->add('/extras', ['controller' => 'ExtrasController', 'action' => 'index', 'method' => 'GET']);
+    $r->add('/extras/toggle', ['controller' => 'ExtrasController', 'action' => 'toggle', 'method' => 'POST']);
     $r->add('/scheduled-tasks', ['controller' => 'ScheduledTaskController', 'action' => 'index', 'method' => 'GET']);
     $r->add('/scheduled-tasks/statuses', ['controller' => 'ScheduledTaskController', 'action' => 'statuses', 'method' => 'GET']);
     $r->add('/scheduled-tasks/hint', ['controller' => 'ScheduledTaskController', 'action' => 'hint', 'method' => 'GET']);
@@ -749,6 +767,9 @@ $router->group([
     //     $r->add('/{controller}/{id:\d+}/destroy', ['action' => 'destroy', 'method' => 'POST']);
     // }
 });
+
+// Module routes sit under /m/<key>, so they must be added before the blog's /{postSlug} catch-all below
+\Framework\Core\App::container()->get(\Framework\Modules\ModuleBooter::class)->bootRoutes($router);
 
 // Blog routes under a blog-specific slug with theme middleware
 $router->group([

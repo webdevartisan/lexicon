@@ -97,7 +97,7 @@ class AnalyticsTechnicalModel extends AppModel
         [$where, $params] = $this->scopeWhere($scope);
         $since = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->modify("-{$days} days");
 
-        // local_date is the partition key; a day of slack covers every blog timezone.
+        // local_date is the partition key, so it narrows the scan before created_at does
         return $this->database->query(
             "SELECT grouped, MIN(val) AS p75, MAX(n) AS samples
              FROM (SELECT {$groupBy} AS grouped, {$column} AS val,
@@ -108,7 +108,7 @@ class AnalyticsTechnicalModel extends AppModel
                      AND local_date >= ? AND created_at >= ? AND {$where}) measured
              WHERE rn >= CEIL(0.75 * n) AND n >= ?
              GROUP BY grouped",
-            [$since->modify('-1 day')->format('Y-m-d'), $since->format('Y-m-d H:i:s'), ...$params, $minSamples]
+            [$since->format('Y-m-d'), $since->format('Y-m-d H:i:s'), ...$params, $minSamples]
         )->fetchAll(\PDO::FETCH_ASSOC);
     }
 

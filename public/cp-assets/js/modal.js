@@ -70,7 +70,8 @@
             openModals.push({ id: id, trigger: trigger || document.activeElement });
             show(modal, 200);
             syncPage();
-            (modal.querySelector(focusable) || modal).focus();
+            // [data-autofocus] lets a dialog pick where focus lands, so a link far down its body doesn't scroll it
+            (modal.querySelector('[data-autofocus]') || modal.querySelector(focusable) || modal).focus();
         }
 
         function close(id) {

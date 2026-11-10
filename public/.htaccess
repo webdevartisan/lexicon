@@ -18,6 +18,9 @@
     # Header always set Content-Security-Policy "default-src 'self';"
 </IfModule>
 
+# A folder address answers 403 instead of listing the files inside it.
+Options -Indexes
+
 
 # ========================================
 # CACHE CONTROL FOR STATIC ASSETS
@@ -30,14 +33,13 @@
 
     # CSS & JavaScript
     <FilesMatch "\.(css|js)$">
-        # Mark versioned files (e.g., assets/app.[hash].css/js) for long‑term caching.
-        SetEnvIf Request_URI "\.[0-9a-f]{8,}\.(css|js)$" VERSIONED
-        SetEnvIf Query_String "v=" VERSIONED
-
-        # Use long cache + immutable for versioned assets.
-        Header set Cache-Control "public, max-age=31536000, immutable" env=VERSIONED
-        # Short cache for unversioned assets (fallback during dev).
-        Header set Cache-Control "public, max-age=600" env=!VERSIONED
+        # A ?v= token or a hash in the name changes with the file, so those URLs never go stale
+        <If "%{QUERY_STRING} =~ /(^|&)v=./ || %{REQUEST_URI} =~ /\.[0-9a-f]{8,}\.(css|js)$/">
+            Header set Cache-Control "public, max-age=31536000, immutable"
+        </If>
+        <Else>
+            Header set Cache-Control "public, max-age=600"
+        </Else>
     </FilesMatch>
 
     # Images
