@@ -1,4 +1,4 @@
-<?php  //[STAMP] 5e7b5056900571f5a0c35ef9a284e9ff
+<?php  //[STAMP] 143897c240ba228070421936f9761bd0
 // phpcs:ignoreFile
 namespace Support\_generated;
 
@@ -5028,6 +5028,52 @@ trait JourneyTesterActions
      */
     public function writeInTheEmptyEditor(string $text): void {
         $this->getScenario()->runStep(new \Codeception\Step\Action('writeInTheEmptyEditor', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     * Open one of the post editor's dialogs (postLinkDialog, postOrganizeDialog, ...) through
+     * whichever of its buttons is on screen.
+     * @see \Support\Helper\Lexicon::openEditorDialog()
+     */
+    public function openEditorDialog(string $id): void {
+        $this->getScenario()->runStep(new \Codeception\Step\Action('openEditorDialog', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     * Close a post editor dialog with its own button.
+     * @see \Support\Helper\Lexicon::closeEditorDialog()
+     */
+    public function closeEditorDialog(string $id): void {
+        $this->getScenario()->runStep(new \Codeception\Step\Action('closeEditorDialog', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     * Press the editor's publish button and confirm in the check it opens. The same
+     * two presses schedule the post when a later date is set.
+     * @see \Support\Helper\Lexicon::publishFromTheEditor()
+     */
+    public function publishFromTheEditor(): void {
+        $this->getScenario()->runStep(new \Codeception\Step\Action('publishFromTheEditor', func_get_args()));
+    }
+
+ 
+    /**
+     * [!] Method is generated. Documentation taken from corresponding module.
+     *
+     * Choose "Delete post" from the editor's "More actions" menu. The confirmation comes next.
+     * @see \Support\Helper\Lexicon::deleteFromTheEditor()
+     */
+    public function deleteFromTheEditor(): void {
+        $this->getScenario()->runStep(new \Codeception\Step\Action('deleteFromTheEditor', func_get_args()));
     }
 
  

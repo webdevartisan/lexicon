@@ -1,46 +1,39 @@
 <?php
 /**
- * SEO card for the post editor.
- *
- * Sits full width below the editor rather than in the sidebar, so the search
- * preview can be shown at something close to its real proportions.
+ * Search engine fields for the post editor, shown inside their own dialog
+ * next to a preview of the search result.
  *
  * Expects: $post, $blog
  */
 $inputClass = 'block w-full px-3 py-2 text-sm border rounded-md outline-none border-slate-300/80 text-slate-900 placeholder:text-slate-400 bg-white focus:border-custom-500 focus:ring-1 focus:ring-custom-200 dark:bg-zink-800 dark:border-zink-600 dark:text-zink-100 dark:placeholder:text-zink-400';
 $labelClass = 'block mb-1.5 text-xs font-medium tracking-wide uppercase text-slate-500 dark:text-zink-300';
-$hintClass = 'mt-1.5 text-[11px] text-slate-500 dark:text-zink-400';
 
 $postPath = base_url().'/blog/'.($blog['blog_slug'] ?? '').'/'.($post['slug'] ?? '');
 ?>
-<details class="post-panel rounded-lg border border-slate-200 bg-white shadow-sm dark:border-zink-600 dark:bg-zink-700">
+<div>
 
-  <summary class="post-panel-head flex cursor-pointer items-center gap-2 border-slate-200 p-4 dark:border-zink-600">
-    <i data-lucide="search" class="size-4 shrink-0 text-slate-400 dark:text-zink-400" aria-hidden="true"></i>
-    <div>
-      <h3 class="text-sm font-semibold text-slate-900 dark:text-zink-100">Search engines</h3>
-      <p class="mt-0.5 text-xs text-slate-500 dark:text-zink-300">How this post appears in search results</p>
-    </div>
-    <i data-lucide="chevron-down" class="post-panel-chevron ml-auto size-4 shrink-0 text-slate-400 dark:text-zink-400" aria-hidden="true"></i>
-  </summary>
-
-  <div class="grid gap-6 p-4 md:grid-cols-[minmax(0,1fr)_320px] md:p-5">
+  <div class="grid gap-6 text-left md:grid-cols-[minmax(0,1fr)_320px]">
 
     <?php /* min-w-0 stops a grid item's auto minimum from overflowing on narrow screens */ ?>
     <div class="min-w-0 space-y-4">
 
       <div>
-        <label for="focus_keyword" class="<?= $labelClass ?>">Focus keyword</label>
+        <label for="focus_keyword" class="<?= $labelClass ?>">Focus keyword
+          <?php $hintText = 'The main phrase this post should be found for. Guidance only, it is not published.'; ?>
+          {% cmp="hint" text="{$hintText}" %}
+        </label>
         <input id="focus_keyword" name="focus_keyword" type="text"
           value="<?= e($post['focus_keyword'] ?? '') ?>"
           class="<?= $inputClass ?>"
           placeholder="e.g. php mvc framework">
-        <p class="<?= $hintClass ?>">Primary keyword you're targeting. Guidance only, it isn't published.</p>
       </div>
 
       <div>
         <div class="mb-1.5 flex items-center justify-between">
-          <label for="meta_title" class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-zink-300">Meta title</label>
+          <label for="meta_title" class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-zink-300">Meta title
+          <?php $hintText = '50-60 characters displays without truncation. Left empty, it uses the post title and blog name.'; ?>
+          {% cmp="hint" text="{$hintText}" %}
+        </label>
           <span id="meta_title_count" class="text-xs tabular-nums text-slate-400 dark:text-zink-400">0/60</span>
         </div>
         <input id="meta_title" name="meta_title" type="text" maxlength="70"
@@ -49,23 +42,27 @@ $postPath = base_url().'/blog/'.($blog['blog_slug'] ?? '').'/'.($post['slug'] ??
           data-title-suffix="<?= e(search_title_suffix((string) ($blog['blog_name'] ?? ''))) ?>"
           class="<?= $inputClass ?>"
           placeholder="Defaults to post title">
-        <p class="<?= $hintClass ?>">50-60 characters displays without truncation. Left empty, it uses the post title and blog name.</p>
       </div>
 
       <div>
         <div class="mb-1.5 flex items-center justify-between">
-          <label for="meta_description" class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-zink-300">Meta description</label>
+          <label for="meta_description" class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-zink-300">Meta description
+          <?php $hintText = '150-160 characters. Falls back to the excerpt when empty.'; ?>
+          {% cmp="hint" text="{$hintText}" %}
+        </label>
           <span id="meta_description_count" class="text-xs tabular-nums text-slate-400 dark:text-zink-400">0/160</span>
         </div>
         <textarea id="meta_description" name="meta_description" rows="3" maxlength="200"
           data-char-limit="160"
           class="<?= $inputClass ?>"
           placeholder="Compelling summary for search results"><?= e($post['meta_description'] ?? '') ?></textarea>
-        <p class="<?= $hintClass ?>">150-160 characters. Falls back to the excerpt when empty.</p>
       </div>
 
       <div>
-        <label for="canonical_url" class="<?= $labelClass ?>">Canonical URL</label>
+        <label for="canonical_url" class="<?= $labelClass ?>">Canonical URL
+          <?php $hintText = 'Only needed when this post is republished from somewhere else.'; ?>
+          {% cmp="hint" text="{$hintText}" %}
+        </label>
         <div class="relative">
           <input id="canonical_url" name="canonical_url" type="url"
             value="<?= e($post['canonical_url'] ?? '') ?>"
@@ -79,7 +76,6 @@ $postPath = base_url().'/blog/'.($blog['blog_slug'] ?? '').'/'.($post['slug'] ??
             <i data-lucide="zap" class="size-4" aria-hidden="true"></i>
           </button>
         </div>
-        <p class="<?= $hintClass ?>">Only needed when this post is republished from somewhere else.</p>
       </div>
 
       <div class="border-t border-slate-200 pt-3 dark:border-zink-600">
@@ -106,7 +102,7 @@ $postPath = base_url().'/blog/'.($blog['blog_slug'] ?? '').'/'.($post['slug'] ??
 
     </div>
 
-    <div class="min-w-0 md:sticky md:top-[calc(theme('spacing.header')_+_5rem)] md:self-start">
+    <div class="min-w-0">
       <p class="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-zink-300">Search preview</p>
       <div class="rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-zink-600 dark:bg-zink-800/50">
         <div class="flex items-center gap-1.5">
@@ -131,4 +127,4 @@ $postPath = base_url().'/blog/'.($blog['blog_slug'] ?? '').'/'.($post['slug'] ??
     </div>
 
   </div>
-</details>
+</div>

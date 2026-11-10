@@ -25,28 +25,30 @@ if (count($I->grabMultiple('#deleteTranslation')) > 0) {
     $I->waitForText('Translation deleted');
 }
 
-// Without the setting the post has no language tabs; switching it off first lets the journey run again
+// Without the setting the post has no language menu; switching it off first lets the journey run again
 $I->amOnPage("{$blog}/settings");
 $I->scrollDownTo('#translations_enabled');
 $I->uncheckOption('#translations_enabled');
 $I->click('button[data-actionbar-primary]');
 $I->waitForText('Blog updated');
 $I->amOnPage($postEditUrl);
-$I->dontSeeElement('nav[aria-label="Post languages"]');
+$I->dontSeeElement('[data-locale-menu]');
 
 // Turning it on adds them
 $I->amOnPage("{$blog}/settings");
+$I->click('#localization summary');
 $I->scrollDownTo('#translations_enabled');
 $I->checkOption('#translations_enabled');
 $I->click('button[data-actionbar-primary]');
 $I->waitForText('Blog updated');
 $I->seeThePageLooksRight('localized-turned-on');
 $I->amOnPage($postEditUrl);
-$I->seeElement('nav[aria-label="Post languages"]');
+$I->seeElement('[data-locale-menu]');
 $I->seeThePageLooksRight('localized-tabs');
 
-// The Greek tab starts empty and takes a title and a body
-$I->click('EL', 'nav[aria-label="Post languages"]');
+// The Greek version starts empty and takes a title and a body
+$I->click('[data-locale-menu] summary');
+$I->click('EL', '[data-locale-menu]');
 $I->waitForElement('#content_ifr', 15);
 $I->see('Not translated yet');
 $I->fillField('title', $greekTitle);
@@ -68,8 +70,7 @@ $I->dontSeeInTitle($greekTitle);
 // Deleting the translation sends Greek readers back to the original
 $I->signInAs('writer');
 $I->amOnPage("/en/dashboard/post/{$postId}/translations/el");
-$I->scrollDownTo('button[form=deleteTranslation]');
-$I->click('Delete Translation');
+$I->click('button[form=deleteTranslation]');
 $I->acceptConfirm('Delete this translation?');
 $I->waitForText('Translation deleted');
 $I->amAGuest();

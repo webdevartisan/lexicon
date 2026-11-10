@@ -19,12 +19,15 @@ $I->fillField('title', "A link that moves {$stamp}");
 $I->writeInTheEmptyEditor('A draft whose address changes before it goes live.');
 
 // The first autosave, half a minute after the last keystroke, makes the draft and leaves the address open to change
+$I->openEditorDialog('postLinkDialog');
 $I->waitForText('You can change it until the post is published.', 45);
 $I->assertNull($I->grabAttributeFrom('input[name=slug]', 'readonly'));
 $I->fillField('slug', $link);
 $I->waitForText('This address is available.', 10);
+$I->closeEditorDialog('postLinkDialog');
 $I->click('Save draft');
 $I->waitForText('Post updated successfully.');
+$I->openEditorDialog('postLinkDialog');
 $I->seeInField('slug', $link);
 
 // The edit page checks the address too, and the post's own address counts as free
@@ -32,9 +35,10 @@ $I->click('input[name=slug]');
 $I->pressKey('input[name=slug]', ' ');
 $I->pressKey('input[name=slug]', WebDriverKeys::BACKSPACE);
 $I->waitForText('This address is available.', 10);
+$I->closeEditorDialog('postLinkDialog');
 
 // Publishing fixes the address, so the field goes away and readers find the post there
-$I->click('Publish');
+$I->publishFromTheEditor();
 $I->waitForText('Post updated successfully.');
 $I->dontSeeElement('input[name=slug]');
 $editUrl = $I->grabFromCurrentUrl();
@@ -45,6 +49,6 @@ $I->dontSeeInTitle('Page not found');
 // Leave the walk blog as later journeys expect it
 $I->signInAs('writer');
 $I->amOnPage($editUrl);
-$I->click('Delete post');
+$I->deleteFromTheEditor();
 $I->acceptConfirm();
 $I->waitForText('deleted', 10);

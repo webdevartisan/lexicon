@@ -154,6 +154,52 @@ class Lexicon extends Module
     }
 
     /**
+     * Open one of the post editor's dialogs (postLinkDialog, postOrganizeDialog, ...) through
+     * whichever of its buttons is on screen.
+     */
+    public function openEditorDialog(string $id): void
+    {
+        $browser = $this->browser();
+        $browser->executeJS(
+            "Array.prototype.filter.call(document.querySelectorAll('[data-modal-target=\"{$id}\"]'), function (el) {"
+            .' return el.offsetParent !== null; })[0].click();'
+        );
+        $browser->waitForElementVisible("#{$id} [data-modal-close]");
+    }
+
+    /**
+     * Close a post editor dialog with its own button.
+     */
+    public function closeEditorDialog(string $id): void
+    {
+        $browser = $this->browser();
+        $browser->click("#{$id} [data-modal-close]");
+        $browser->waitForElementNotVisible("#{$id} [data-modal-close]");
+    }
+
+    /**
+     * Press the editor's publish button and confirm in the check it opens. The same
+     * two presses schedule the post when a later date is set.
+     */
+    public function publishFromTheEditor(): void
+    {
+        $browser = $this->browser();
+        $browser->click('[data-publish-check]');
+        $browser->waitForElementVisible('#postPublishDialog button[name=intent]');
+        $browser->click('#postPublishDialog button[name=intent]');
+    }
+
+    /**
+     * Choose "Delete post" from the editor's "More actions" menu. The confirmation comes next.
+     */
+    public function deleteFromTheEditor(): void
+    {
+        $browser = $this->browser();
+        $browser->click('summary[title="More actions"]');
+        $browser->click('Delete post');
+    }
+
+    /**
      * Open the replies under a comment unless they already show, as they do right after replying.
      */
     public function showRepliesTo(string $commentId): void

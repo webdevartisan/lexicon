@@ -479,7 +479,7 @@ final class AnalyticsSeeder
 
         foreach ($blogs as $rank => $blog) {
             $zone = new \DateTimeZone('UTC');
-            $posts =array_values(array_filter(array_column($this->pages($blog), 1)));
+            $posts = array_values(array_filter(array_column($this->pages($blog), 1)));
 
             for ($ago = $days + 1; $ago < self::HISTORY_DAYS; $ago++) {
                 $moment = new \DateTimeImmutable("today -{$ago} days 12:00", $zone);

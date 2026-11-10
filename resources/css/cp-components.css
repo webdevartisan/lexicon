@@ -1181,3 +1181,7 @@
         animation: none;
     }
 }
+/* The post editor has no page heading, so its save bar sits where toasts land. They drop below it there. */
+body:has([data-editor]) #toast-stack {
+    top: calc(theme("spacing.header") + 5.5rem);
+}

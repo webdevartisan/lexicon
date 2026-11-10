@@ -262,6 +262,8 @@ final class PostController extends AppController
         $zone = $this->writerZone($userId);
 
         return $this->view([
+            // The editor's own bar stands in for the page heading.
+            'noBreadcrumb' => true,
             'blog' => $blog->toArray(),
             'publishZone' => $zone,
             'backUrl' => $this->backUrlPath(),
@@ -438,6 +440,7 @@ final class PostController extends AppController
         $translationsEnabled = !empty($blogSettings['translations_enabled']);
 
         return $this->view([
+            'noBreadcrumb' => true,
             'post' => $postArray,
             'blog' => $blog->toArray(),
             'publishZone' => $zone,

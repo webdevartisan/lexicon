@@ -1,6 +1,6 @@
 <?php
 /**
- * Social sharing card for the post editor.
+ * Social sharing fields for the post editor, shown inside their own dialog.
  *
  * One set of og: fields drives every platform, because that is how the
  * protocol actually works: Facebook, LinkedIn, WhatsApp, Slack and Discord all
@@ -16,7 +16,6 @@
  */
 $inputClass = 'block w-full px-3 py-2 text-sm border rounded-md outline-none border-slate-300/80 text-slate-900 placeholder:text-slate-400 bg-white focus:border-custom-500 focus:ring-1 focus:ring-custom-200 dark:bg-zink-800 dark:border-zink-600 dark:text-zink-100 dark:placeholder:text-zink-400';
 $labelClass = 'block mb-1.5 text-xs font-medium tracking-wide uppercase text-slate-500 dark:text-zink-300';
-$hintClass = 'mt-1.5 text-[11px] text-slate-500 dark:text-zink-400';
 
 $host = parse_url(base_url(), PHP_URL_HOST) ?: 'example.com';
 $cardType = $post['twitter_card_type'] ?? 'summary_large_image';
@@ -30,27 +29,21 @@ $platforms = [
     'discord' => ['label' => 'Discord', 'icon' => 'message-square'],
 ];
 ?>
-<details class="post-panel rounded-lg border border-slate-200 bg-white shadow-sm dark:border-zink-600 dark:bg-zink-700"
-         data-social-card
-         data-host="<?= e($host) ?>">
+<div
+     data-social-card
+     data-host="<?= e($host) ?>">
 
-  <summary class="post-panel-head flex cursor-pointer items-center gap-2 border-slate-200 p-4 dark:border-zink-600">
-    <i data-lucide="share-2" class="size-4 shrink-0 text-slate-400 dark:text-zink-400" aria-hidden="true"></i>
-    <div>
-      <h3 class="text-sm font-semibold text-slate-900 dark:text-zink-100">Social sharing</h3>
-      <p class="mt-0.5 text-xs text-slate-500 dark:text-zink-300">How this post looks when someone shares the link</p>
-    </div>
-    <i data-lucide="chevron-down" class="post-panel-chevron ml-auto size-4 shrink-0 text-slate-400 dark:text-zink-400" aria-hidden="true"></i>
-  </summary>
-
-  <div class="grid gap-6 p-4 md:grid-cols-[minmax(0,1fr)_340px] md:p-5">
+  <div class="grid gap-6 text-left md:grid-cols-[minmax(0,1fr)_340px]">
 
     <?php /* min-w-0 stops a grid item's auto minimum from overflowing on narrow screens */ ?>
     <div class="min-w-0 space-y-4">
 
       <div>
         <div class="mb-1.5 flex items-center justify-between">
-          <label for="og_title" class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-zink-300">Social title</label>
+          <label for="og_title" class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-zink-300">Social title
+          <?php $hintText = '55-60 characters survives on every platform.'; ?>
+          {% cmp="hint" text="{$hintText}" %}
+        </label>
           <span id="og_title_count" class="text-xs tabular-nums text-slate-400 dark:text-zink-400">0/60</span>
         </div>
         <input id="og_title" name="og_title" type="text" maxlength="70"
@@ -58,47 +51,54 @@ $platforms = [
           data-char-limit="60"
           class="<?= $inputClass ?>"
           placeholder="Defaults to post title">
-        <p class="<?= $hintClass ?>">55-60 characters survives on every platform.</p>
       </div>
 
       <div>
         <div class="mb-1.5 flex items-center justify-between">
-          <label for="og_description" class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-zink-300">Social description</label>
+          <label for="og_description" class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-zink-300">Social description
+          <?php $hintText = '60-65 characters. LinkedIn drops this entirely, so do not rely on it there.'; ?>
+          {% cmp="hint" text="{$hintText}" %}
+        </label>
           <span id="og_description_count" class="text-xs tabular-nums text-slate-400 dark:text-zink-400">0/65</span>
         </div>
         <textarea id="og_description" name="og_description" rows="2" maxlength="100"
           data-char-limit="65"
           class="<?= $inputClass ?>"
           placeholder="Engaging description for social shares"><?= e($post['og_description'] ?? '') ?></textarea>
-        <p class="<?= $hintClass ?>">60-65 characters. LinkedIn drops this entirely, so don't rely on it there.</p>
       </div>
 
       <div>
-        <label for="og_image" class="<?= $labelClass ?>">Social image URL</label>
+        <label for="og_image" class="<?= $labelClass ?>">Social image URL
+          <?php $hintText = '1200 × 630 pixels (1.91:1). Smaller images get cropped or dropped.'; ?>
+          {% cmp="hint" text="{$hintText}" %}
+        </label>
         <input id="og_image" name="og_image" type="url"
           value="<?= e($post['og_image'] ?? '') ?>"
           class="<?= $inputClass ?>"
           placeholder="Defaults to featured image">
-        <p class="<?= $hintClass ?>">1200 &times; 630 pixels (1.91:1). Smaller images get cropped or dropped.</p>
       </div>
 
       <div>
-        <label for="og_image_alt" class="<?= $labelClass ?>">Image alt text</label>
+        <label for="og_image_alt" class="<?= $labelClass ?>">Image alt text
+          <?php $hintText = 'Read aloud in place of the image on assistive technology.'; ?>
+          {% cmp="hint" text="{$hintText}" %}
+        </label>
         <input id="og_image_alt" name="og_image_alt" type="text" maxlength="255"
           value="<?= e($post['og_image_alt'] ?? '') ?>"
           class="<?= $inputClass ?>"
           placeholder="Describe the image for screen readers">
-        <p class="<?= $hintClass ?>">Read aloud in place of the image on assistive technology.</p>
       </div>
 
       <div>
-        <label for="twitter_card_type" class="<?= $labelClass ?>">X card type</label>
+        <label for="twitter_card_type" class="<?= $labelClass ?>">X card type
+          <?php $hintText = 'Switch the X tab to see the difference.'; ?>
+          {% cmp="hint" text="{$hintText}" %}
+        </label>
         <select id="twitter_card_type" name="twitter_card_type"
           class="block w-full rounded-md border border-slate-300/80 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-custom-500 focus:ring-1 focus:ring-custom-200 dark:border-zink-600 dark:bg-zink-800 dark:text-zink-100">
           <option value="summary_large_image" <?= $cardType === 'summary_large_image' ? 'selected' : '' ?>>Large image</option>
           <option value="summary" <?= $cardType === 'summary' ? 'selected' : '' ?>>Small square thumbnail</option>
         </select>
-        <p class="<?= $hintClass ?>">Switch the X tab to see the difference.</p>
       </div>
 
       <details class="rounded-md border border-slate-200 dark:border-zink-600" <?= $hasTwitterOverride ? 'open' : '' ?>>
@@ -139,7 +139,7 @@ $platforms = [
 
     </div>
 
-    <div class="min-w-0 md:sticky md:top-[calc(theme('spacing.header')_+_5rem)] md:self-start">
+    <div class="min-w-0">
 
       <div class="mb-2 flex flex-wrap gap-1" role="tablist" aria-label="Platform previews">
         <?php foreach ($platforms as $key => $meta) { ?>
@@ -243,4 +243,4 @@ $platforms = [
     </div>
 
   </div>
-</details>
+</div>

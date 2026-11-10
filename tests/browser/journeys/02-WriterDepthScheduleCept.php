@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Facebook\WebDriver\WebDriverKeys;
 use Support\JourneyTester;
 
 $I = new JourneyTester($scenario);
@@ -19,16 +18,13 @@ $I->fillField('title', $title);
 $I->waitForJS("return document.querySelector('input[name=slug]').value !== ''");
 $slug = $I->grabValueFrom('slug');
 $I->writeInTheEmptyEditor('This one waits for the scheduler.');
-// The side column sticks while scrolling, so its lower half only shows at the end of the page
-$I->pressKey('body', WebDriverKeys::END);
-$I->wait(1);
 $due = (int) $I->executeJS(<<<'JS'
     const when = new Date(Date.now() + 60000);
     when.setSeconds(0, 0);
     document.querySelector('#published_at')._flatpickr.setDate(when, true);
     return when.getTime() / 1000;
 JS);
-$I->click('Schedule');
+$I->publishFromTheEditor();
 $I->waitForText('Post saved');
 $I->seeThePageLooksRight('schedule-saved');
 
